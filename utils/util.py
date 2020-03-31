@@ -155,7 +155,7 @@ class Metrics:
 
     def update(self, values):
         for key in self.data:
-            self.data[key] = values[key]
+            self.data[key] += values[key]
 
     def avg_acc(self):
         return self.data['correct'] / self.data['total']
@@ -185,7 +185,7 @@ def select_optimizer(args, model):
 
 def print_stats(args, epoch, num_samples, trainloader, metrics):
     if (num_samples % args.log_interval == 1):
-        print("Epoch:{}\tSample:{}/{}\tLoss:{:.4f}\tAcc:{:.2f}   Accuracy:{:.2f}".format(epoch,
+        print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAcc:{:.2f}   Accuracy:{:.2f}".format(epoch,
                                                                                          num_samples,
                                                                                          len(
                                                                                              trainloader) * args.batch_size,
@@ -200,7 +200,7 @@ def print_stats(args, epoch, num_samples, trainloader, metrics):
 
 
 def print_summary(args, epoch, num_samples, metrics, mode=''):
-    print(mode + " SUMMARY EPOCH:{}\tSample:{}/{}\tLoss:{:.4f}\tAcc:{:.2f}   Accuracy:{:.2f}".format(epoch,
+    print(mode + " SUMMARY EPOCH:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAcc:{:.2f}   Accuracy:{:.2f}".format(epoch,
                                                                                                      num_samples,
                                                                                                      num_samples * args.batch_size,
                                                                                                      metrics.data[
