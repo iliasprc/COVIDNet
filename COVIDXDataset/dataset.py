@@ -43,18 +43,14 @@ class COVIDxDataset(Dataset):
     def load_image(self, img_path, dim, augmentation='test'):
         if not os.path.exists(img_path):
             print("IMAGE DOES NOT EXIST {}".format(img_path))
-        image = Image.open(img_path)
+        image = Image.open(img_path).convert('RGB')
         image = image.resize(dim)
 
-        # image.convert('RGB')
         t = transforms.ToTensor()
-        # print(t(image).shape)
-        # norm = transforms.Normalize(mean=[0, 0, 0],
-        #                             std=[1, 1, 1])
 
-        image_tensor = t(image)
+        norm = transforms.Normalize(mean=[0.5, 0.5, 0.5],
+                                     std=[1, 1, 1])
 
-        if (image_tensor.size(0) > 1):
-            # print(img_path," > 1 channels")
-            image_tensor = image_tensor.mean(dim=0, keepdim=True)
+        image_tensor = norm(t(image))
+
         return image_tensor

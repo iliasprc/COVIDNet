@@ -11,7 +11,7 @@ def initialize(args):
     if args.device is not None:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.device
     model = select_model(args)
-    optimizer = select_optimizer(args,model)
+    optimizer = select_optimizer(args, model)
     if (args.cuda):
         model.cuda()
 
@@ -29,7 +29,7 @@ def initialize(args):
                                dim=(224, 224))
     training_generator = DataLoader(train_loader, **train_params)
     val_generator = DataLoader(val_loader, **test_params)
-    return model, optimizer,training_generator,val_generator
+    return model, optimizer, training_generator, val_generator
 
 
 def train(args, model, trainloader, optimizer, epoch):

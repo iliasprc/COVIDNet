@@ -8,6 +8,7 @@ import torch.optim as optim
 import pandas as pd
 from model.model import CovidNet
 import csv
+import numpy as np
 
 
 def write_score(writer, iter, mode, metrics):
@@ -67,38 +68,43 @@ def datestr():
     return '{}{:02}{:02}_{:02}{:02}'.format(now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min)
 
 
-def save_checkpoint(state, is_best, path, prefix, filename='checkpoint.pth.tar'):
-    prefix_save = os.path.join(path, prefix)
-    name = prefix_save + '_' + filename
+def save_checkpoint(state, is_best, path, filename='last'):
+    name = os.path.join(path, filename + '_checkpoint.pth.tar')
+    print(name)
     torch.save(state, name)
-    if is_best:
-        shutil.copyfile(name, prefix_save + '_BEST.pth.tar')
 
 
-def save_model(model, args, val_stats, epoch, best_pred_loss):
-    loss = val_stats[0]
+def save_model(model, optimizer, args, metrics, epoch, best_pred_loss, confusion_matrix):
+    loss = metrics.data['loss']
+    save_path = args.save
+    make_dirs(save_path)
+
+    with open(save_path + '/training_arguments.txt', 'w') as f:
+        json.dump(args.__dict__, f, indent=2)
+
     is_best = False
     if loss < best_pred_loss:
         is_best = True
         best_pred_loss = loss
         save_checkpoint({'epoch': epoch,
                          'state_dict': model.state_dict(),
-                         'val_loss': best_pred_loss},
-                        is_best, args.save, args.model + "_best")
-    elif epoch % 5 == 0:
+                         'optimizer': optimizer.state_dict(),
+                         'metrics': metrics.data},
+                        is_best, save_path, args.model + "_best")
+        np.save(save_path + 'best_confusion_matrix.npy', confusion_matrix.cpu().numpy())
+
+    else:
         save_checkpoint({'epoch': epoch,
                          'state_dict': model.state_dict(),
-                         'val_loss': best_pred_loss},
-                        is_best, args.save, args.model + "last")
-    with open(args.save + '/training_arguments.txt', 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
+                         'optimizer': optimizer.state_dict(),
+                         'metrics': metrics.data},
+                        False, save_path, args.model + "_last")
+
+    return best_pred_loss
 
 
 def make_dirs(path):
-    if os.path.exists(path):
-        shutil.rmtree(path)
-        os.mkdir(path)
-    else:
+    if not os.path.exists(path):
         os.makedirs(path)
 
 
@@ -185,29 +191,39 @@ def select_optimizer(args, model):
 
 def print_stats(args, epoch, num_samples, trainloader, metrics):
     if (num_samples % args.log_interval == 1):
-        print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAcc:{:.2f}   Accuracy:{:.2f}".format(epoch,
-                                                                                         num_samples,
-                                                                                         len(
-                                                                                             trainloader) * args.batch_size,
-                                                                                         metrics.data[
-                                                                                             'loss'] / num_samples,
-                                                                                         metrics.data[
-                                                                                             'accuracy'] / num_samples,
-                                                                                         metrics.data[
-                                                                                             'correct'] /
-                                                                                         metrics.data[
-                                                                                             'total']))
+        print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}".format(epoch,
+                                                                                     num_samples,
+                                                                                     len(
+                                                                                         trainloader) * args.batch_size,
+                                                                                     metrics.data[
+                                                                                         'loss'] / num_samples,
+                                                                                     metrics.data[
+                                                                                         'correct'] /
+                                                                                     metrics.data[
+                                                                                         'total']))
 
 
 def print_summary(args, epoch, num_samples, metrics, mode=''):
-    print(mode + " SUMMARY EPOCH:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAcc:{:.2f}   Accuracy:{:.2f}".format(epoch,
+    print(mode + "\n SUMMARY EPOCH:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}\n".format(epoch,
                                                                                                      num_samples,
-                                                                                                     num_samples * args.batch_size,
+                                                                                                     num_samples,
                                                                                                      metrics.data[
                                                                                                          'loss'] / num_samples,
-                                                                                                     metrics.data[
-                                                                                                         'accuracy'] / num_samples,
                                                                                                      metrics.data[
                                                                                                          'correct'] /
                                                                                                      metrics.data[
                                                                                                          'total']))
+
+
+def confusion_matrix(nb_classes):
+    confusion_matrix = torch.zeros(nb_classes, nb_classes)
+    with torch.no_grad():
+        for i, (inputs, classes) in enumerate(dataloaders['val']):
+            inputs = inputs.to(device)
+            classes = classes.to(device)
+            outputs = model_ft(inputs)
+            _, preds = torch.max(outputs, 1)
+            for t, p in zip(classes.view(-1), preds.view(-1)):
+                confusion_matrix[t.long(), p.long()] += 1
+
+    print(confusion_matrix)
