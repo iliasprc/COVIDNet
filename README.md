@@ -15,7 +15,15 @@ My implementation ( Numbers from my training )
 |   89.10      |     115.42   |   2.26   |   [COVID-Net-Small] |
 |   91.22      |     118.19   |   3.54   |   [COVID-Net-Large] |
 
+## Ablation Study
+Comparison with CNNs pretrained on ImageNet dataset
 
+
+
+| Accuracy (%) | # Params (M) | MACs (G) |        Model        |
+|:------------:|:------------:|:--------:|:-------------------:|
+|   94.0       |     -   |   -      |   [Mobilenet V2   ](https://drive.google.com/open?id=19J-1bW6wPl7Kmm0pNagehlM1zk9m37VV) |
+|   95.0       |     -   |   -      |   [ResNeXt50-32x4d](https://drive.google.com/open?id=1-BLolPNYMVWSY0Xnm8Y8wjQCapXiPnLx) |
 
 
 ## TO DO
@@ -73,10 +81,6 @@ Python > 3.5
 PyTorch > 1.0
 
 Numpy
-
-
-
-
 
 
 
