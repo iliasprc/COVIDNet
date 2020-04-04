@@ -16,6 +16,16 @@ My implementation ( Numbers from my training )
 |   91.22      |     118.19   |   3.54   |   [COVID-Net-Large] |
 
 
+## Ablation Study
+Comparison with CNNs pretrained on ImageNet dataset
+
+
+
+| Accuracy (%) | # Params (M) | MACs (G) |        Model        |
+|:------------:|:------------:|:--------:|:-------------------:|
+|   94.0       |     -   |   -      |   [Mobilenet V2   ](https://drive.google.com/open?id=19J-1bW6wPl7Kmm0pNagehlM1zk9m37VV) |
+|   95.0       |     -   |   -      |   [ResNeXt50-32x4d](https://drive.google.com/open?id=1-BLolPNYMVWSY0Xnm8Y8wjQCapXiPnLx) |
+|   94.0       |     -   |   -      | [ResNet-18](https://drive.google.com/open?id=1wxo4gkNGyrhR-1PG8Vr1hj65MfSAHOgJ) |
 
 
 ## TO DO
@@ -26,6 +36,14 @@ Confusion Matrix as in original paper: https://arxiv.org/pdf/2003.09871.pdf
 
 ## Training and evaluation
 The network takes as input an image of shape (N, 224, 224, 3) and outputs the softmax probabilities as (N, 3), where N is the number of batches.
+
+### COVID-CT-Dataset
+
+The COVID-CT-Dataset has 288 CT images containing clinical findings of COVID-19. We are continuously adding more COVID CTs.
+
+The images are collected from medRxiv and bioRxiv papers about COVID-19. CTs containing COVID-19 abnormalities are selected by reading the figure captions in the papers. All copyrights of the data belong to medRxiv and bioRxiv.
+
+Please refer to the preprint for details: COVID-CT-Dataset: A CT Scan Dataset about COVID-19
 
 ### COVIDx  dataset 
 
