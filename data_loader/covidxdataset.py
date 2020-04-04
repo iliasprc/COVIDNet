@@ -49,7 +49,7 @@ class COVIDxDataset(Dataset):
         t = transforms.ToTensor()
 
         norm = transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                                     std=[1, 1, 1])
+                                    std=[1, 1, 1])
 
         image_tensor = norm(t(image))
 

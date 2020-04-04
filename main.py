@@ -3,7 +3,7 @@ import torch
 import numpy as np
 import utils.util as util
 from trainer.train import initialize, train, validation
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 
@@ -30,7 +30,7 @@ def main():
 
         best_pred_loss = util.save_model(model, optimizer, args, val_metrics, epoch, best_pred_loss, confusion_matrix)
 
-        print(confusion_matrix)
+        print(confusion_matrix.cpu().numpy())
         scheduler.step(val_metrics.avg_loss())
 
 
@@ -51,8 +51,8 @@ def get_arguments():
     parser.add_argument('--cuda', action='store_true', default=True)
     parser.add_argument('--resume', default='', type=str, metavar='PATH',
                         help='path to latest checkpoint (default: none)')
-    parser.add_argument('--model', type=str, default='COVIDNet',
-                        choices=('COVIDNET'))
+    parser.add_argument('--model', type=str, default='COVIDNet_large',
+                        choices=('COVIDNet_small', 'resnet18', 'mobilenet_v2', 'COVIDNet_large'))
     parser.add_argument('--opt', type=str, default='adam',
                         choices=('sgd', 'adam', 'rmsprop'))
     parser.add_argument('--dataset', type=str, default='/content/covid-chestxray-dataset/data',

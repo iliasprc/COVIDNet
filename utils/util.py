@@ -6,7 +6,7 @@ from collections import OrderedDict
 import json
 import torch.optim as optim
 import pandas as pd
-from model.model import CovidNet
+from model.model import CovidNet, CNN
 import csv
 import numpy as np
 
@@ -46,21 +46,7 @@ def showgradients(model):
         print("GRADS= \n", param.grad)
 
 
-def save_checkpoint(model, optimizer, epoch, acc, checkpoint, name):
-    state = {'epoch': epoch,
-             'model_dict': model.state_dict(),
-             'optimizer_dict': optimizer.state_dict(),
-             'acc': acc
-             }
-    filepath = os.path.join(checkpoint, name + '.pth')
-    if not os.path.exists(checkpoint):
-        print("Checkpoint Directory does not exist! Making directory {}".format(checkpoint))
-        os.mkdir(checkpoint)
-    else:
-        print("Checkpoint Directory exists! ")
 
-    torch.save(state, filepath)
-    print("CHECKPOINT SAVED")
 
 
 def datestr():
@@ -176,8 +162,13 @@ class Metrics:
 
 
 def select_model(args):
-    if args.model == 'COVIDNet':
-        return CovidNet(args.classes)
+    if args.model == 'COVIDNet_small':
+        return CovidNet('small', n_classes=args.classes)
+
+    elif args.model == 'COVIDNet_large':
+        return CovidNet('large', n_classes=args.classes)
+    elif args.model == 'resnet18':
+        return CNN(args.classes, 'resnet18')
 
 
 def select_optimizer(args, model):
@@ -215,6 +206,7 @@ def print_summary(args, epoch, num_samples, metrics, mode=''):
                                                                                                          'total']))
 
 
+# TODO
 def confusion_matrix(nb_classes):
     confusion_matrix = torch.zeros(nb_classes, nb_classes)
     with torch.no_grad():
