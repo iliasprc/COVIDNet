@@ -3,8 +3,7 @@ My PyTorch implementation of COVID-Net, for the original work please see: https:
 
 Also Google Colab Notebook for plug-n-play training and evaluation
 
-
-
+Tested in two available datasets : COVID-CT-Dataset  and COVIDx dataset
 
 ## Models 
 
@@ -18,14 +17,20 @@ My implementation ( Numbers from my training )
 
 
 
-## TO DO
-
-Integration with MedicalZooPytorch: https://github.com/black0017/MedicalZooPytorch 
-
-Confusion Matrix as in original paper: https://arxiv.org/pdf/2003.09871.pdf
-
 ## Training and evaluation
 The network takes as input an image of shape (N, 224, 224, 3) and outputs the softmax probabilities as (N, 3), where N is the number of batches.
+
+
+
+
+### COVID-CT-Dataset 
+The COVID-CT-Dataset has 288 CT images containing clinical findings of COVID-19. We are continuously adding more COVID CTs.
+
+The images are collected from medRxiv and bioRxiv papers about COVID-19. CTs containing COVID-19 abnormalities are selected by reading the figure captions in the papers. All copyrights of the data belong to medRxiv and bioRxiv.
+
+Please refer to the preprint for details: [COVID-CT-Dataset: A CT Scan Dataset about COVID-19](https://arxiv.org/pdf/2003.13865.pdf)
+
+
 
 ### COVIDx  dataset 
 
