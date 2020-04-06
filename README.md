@@ -13,7 +13,7 @@ My implementation ( Numbers from my training )
 | Accuracy (%) | # Params (M) | MACs (G) |        Model        |
 |:------------:|:------------:|:--------:|:-------------------:|
 |   89.10      |     115.42   |   2.26   |   [COVID-Net-Small] |
-|   91.22      |     118.19   |   3.54   |   [COVID-Net-Large] |
+|   91.22      |     118.19   |   3.54   |   [COVID-Net-Large](https://drive.google.com/open?id=1-3SKFua_wFl2_aAQMIrj2FhowTX8B551) |
 
 
 ## Ablation Study
