@@ -3,41 +3,42 @@ My PyTorch implementation of COVID-Net, for the original work please see: https:
 
 Also Google Colab Notebook for plug-n-play training and evaluation here -->[IliasPap/covidnet.ipynb](https://gist.github.com/IliasPap/598e93ec50fe84f7953eef359d715916)
 
+## Results and Ablation Study 
 
 
+with my   implementation  of COVID-Net and comparison with CNNs pretrained on ImageNet dataset
+### Results in COVIDx  dataset 
 
-## Models 
-
-My implementation ( Numbers from my training )
 
 | Accuracy (%) | # Params (M) | MACs (G) |        Model        |
 |:------------:|:------------:|:--------:|:-------------------:|
 |   89.10      |     115.42   |   2.26   |   [COVID-Net-Small] |
 |   91.22      |     118.19   |   3.54   |   [COVID-Net-Large](https://drive.google.com/open?id=1-3SKFua_wFl2_aAQMIrj2FhowTX8B551) |
-
-
-## Ablation Study
-Comparison with CNNs pretrained on ImageNet dataset
-
-
-
-| Accuracy (%) | # Params (M) | MACs (G) |        Model        |
-|:------------:|:------------:|:--------:|:-------------------:|
 |   94.0       |     -   |   -      |   [Mobilenet V2   ](https://drive.google.com/open?id=19J-1bW6wPl7Kmm0pNagehlM1zk9m37VV) |
 |   95.0       |     -   |   -      |   [ResNeXt50-32x4d](https://drive.google.com/open?id=1-BLolPNYMVWSY0Xnm8Y8wjQCapXiPnLx) |
 |   94.0       |     -   |   -      | [ResNet-18](https://drive.google.com/open?id=1wxo4gkNGyrhR-1PG8Vr1hj65MfSAHOgJ) |
 
+### Results in COVID-CT  dataset 
+Soon ...
 
-## TO DO
+| Accuracy (%) | # Params (M) | MACs (G) |        Model        |
+|:------------:|:------------:|:--------:|:-------------------:|
+|   -   |     -   |  -   |   [COVID-Net-Small] |
+|   -      |     -   |   -  |   [COVID-Net-Large] |
+|   -       |     -   |   -      |   [Mobilenet V2   ] |
+|   -    |     -   |   -      |   [ResNeXt50-32x4d] |
+|  -     |     -   |   -      | [ResNet-18] |
 
-Integration with MedicalZooPytorch: https://github.com/black0017/MedicalZooPytorch 
 
-Confusion Matrix as in original paper: https://arxiv.org/pdf/2003.09871.pdf
+
+Confusion Matrix on both datasets coming soon !!
+
+
 
 ## Training and evaluation
 The network takes as input an image of shape (N, 224, 224, 3) and outputs the softmax probabilities as (N, 3), where N is the number of batches.
 
-### COVID-CT-Dataset
+### 1) COVID-CT-Dataset
 
 The COVID-CT-Dataset has 288 CT images containing clinical findings of COVID-19. We are continuously adding more COVID CTs.
 
@@ -45,7 +46,7 @@ The images are collected from medRxiv and bioRxiv papers about COVID-19. CTs con
 
 Please refer to the preprint for details: COVID-CT-Dataset: A CT Scan Dataset about COVID-19
 
-### COVIDx  dataset 
+### 2) COVIDx  dataset 
 
 
 The current COVIDx dataset is constructed by the following open source chest radiography datasets:
@@ -54,7 +55,7 @@ The current COVIDx dataset is constructed by the following open source chest rad
 
 We especially thank the Radiological Society of North America and others involved in the RSNA Pneumonia Detection Challenge, and Dr. Joseph Paul Cohen and the team at MILA involved in the COVID-19 image data collection project, for making data available to the global community.
 
-### Steps to generate the dataset
+### Steps to generate the COVIDx dataset
 
 Download the datasets listed above
  * `git clone https://github.com/ieee8023/covid-chestxray-dataset.git`
@@ -76,13 +77,30 @@ Chest radiography images distribution
 
 ### Steps for training
 1. To train from scratch simply do `python main.py` 
-2. For argument options  `python main.py --help` 
-
+ Arguments for training 
+ `
+ {
+  "batch_size",
+  "log_interval",
+  "dataset_name",
+  "nEpochs",
+  "device",
+  "seed",
+  "classes",
+  "lr",
+  "weight_decay",
+  "cuda",
+  "resume",
+  "model",
+  "opt",
+  "root_path",
+  "save_dir"
+  }
+`
 ### Steps for inference
 Releasing soon
 
-## Results
-Confusion Matrix Coming soon !!
+
 
 ## Requirements
 
