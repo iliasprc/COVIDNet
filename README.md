@@ -7,6 +7,8 @@
 
 My PyTorch implementation of COVID-Net, for the original work please see: https://github.com/lindawangg/COVID-Net
 
+The purpose of this github is to reproduce results and not to claim state-of-the-art performance !!
+
 Also Google Colab Notebook for plug-n-play training and evaluation here -->[IliasPap/covidnet.ipynb](https://gist.github.com/IliasPap/598e93ec50fe84f7953eef359d715916)
 
 ## Table of Contents
