@@ -14,7 +14,8 @@ Also Google Colab Notebook for plug-n-play training and evaluation here -->[Ilia
 * [Getting Started](#getting-started)
   * [Installation](#installation)
 * [Usage](#usage)
-* [Roadmap](#roadmap)
+* [Results](#results)
+* [Datasets](#datasets)
 * [Contributing](#contributing)
 * [License](#license)
 * [Contact](#contact)
@@ -64,10 +65,13 @@ The network takes as input an image of shape (N, 224, 224, 3) and outputs the so
 
 
 ```
-### Results and Ablation Study 
+<!-- RESULTS -->
+## Results 
 
 
 with my   implementation  of COVID-Net and comparison with CNNs pretrained on ImageNet dataset
+
+
 ### Results in COVIDx  dataset 
 
 
@@ -86,19 +90,18 @@ Soon ...
 |:------------:|:------------:|:--------:|:-------------------:|
 |   -   |     -   |  -   |   [COVID-Net-Small] |
 |   -      |     -   |   -  |   [COVID-Net-Large] |
-|   -       |     -   |   -      |   [Mobilenet V2   ] |
-|   -    |     -   |   -      |   [ResNeXt50-32x4d] |
-|  -     |     -   |   -      | [ResNet-18] |
-
-
+|   76      |     -   |   -      |   [Mobilenet V2   ](https://drive.google.com/open?id=1alVSSN-PkibfFQcH0RA1xIPMSfbVxI89) |
+|   76    |     -   |   -      |   [ResNeXt50-32x4d] |
+|  73     |     -   |   -      | [ResNet-18] |
+|  81    |     -   |   -      | [Densenet-169] |
 
 Confusion Matrix on both datasets coming soon !!
 
 
 
 
-
-
+<!-- Datasets -->
+## Datasets
 ### 1) COVID-CT-Dataset
 
 The COVID-CT-Dataset has 288 CT images containing clinical findings of COVID-19. We are continuously adding more COVID CTs.
