@@ -1,14 +1,14 @@
-import torch
+import json
 import os
-import shutil
 import time
 from collections import OrderedDict
-import json
-import torch.optim as optim
-import pandas as pd
-from model.model import CovidNet, CNN
-import csv
+
 import numpy as np
+import pandas as pd
+import torch
+import torch.optim as optim
+
+from model.model import CovidNet, CNN
 
 
 def write_score(writer, iter, mode, metrics):
@@ -44,9 +44,6 @@ def showgradients(model):
     for param in model.parameters():
         print(type(param.data), param.size())
         print("GRADS= \n", param.grad)
-
-
-
 
 
 def datestr():
@@ -125,6 +122,46 @@ def read_filepaths(file):
     return paths, labels
 
 
+class MetricTracker:
+    def __init__(self, *keys, writer=None, mode='/'):
+
+        self.writer = writer
+        self.mode = mode + '/'
+        self.keys = keys
+        print(self.keys)
+        self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
+        self.reset()
+
+    def reset(self):
+        for col in self._data.columns:
+            self._data[col].values[:] = 0
+
+    def update(self, key, value, n=1, writer_step=1):
+        if self.writer is not None:
+            self.writer.add_scalar(self.mode + key, value, writer_step)
+        self._data.total[key] += value * n
+        self._data.counts[key] += n
+        self._data.average[key] = self._data.total[key] / self._data.counts[key]
+
+    def update_all_metrics(self, values_dict, n=1, writer_step=1):
+        for key in values_dict:
+            self.update(key, values_dict[key], n, writer_step)
+
+    def avg(self, key):
+        return self._data.average[key]
+
+    def result(self):
+        return dict(self._data.average)
+
+    def print_all_metrics(self):
+        s = ''
+        d = dict(self._data.average)
+        for key in dict(self._data.average):
+            s += "{} {:.4f}\t".format(key, d[key])
+
+        return s
+
+
 class Metrics:
     def __init__(self, path, keys=None, writer=None):
         self.writer = writer
@@ -167,8 +204,8 @@ def select_model(args):
 
     elif args.model == 'COVIDNet_large':
         return CovidNet('large', n_classes=args.classes)
-    elif args.model == 'resnet18':
-        return CNN(args.classes, 'resnet18')
+    elif args.model in ['resnet18', 'mobilenet2', 'densenet169', 'resneXt']:
+        return CNN(args.classes, args.model)
 
 
 def select_optimizer(args, model):
@@ -180,30 +217,32 @@ def select_optimizer(args, model):
         return optim.RMSprop(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 
+def read_txt(txt_path):
+    with open(txt_path) as f:
+        lines = f.readlines()
+    txt_data = [line.strip() for line in lines]
+    return txt_data
+
+
 def print_stats(args, epoch, num_samples, trainloader, metrics):
     if (num_samples % args.log_interval == 1):
         print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}".format(epoch,
                                                                                      num_samples,
                                                                                      len(
                                                                                          trainloader) * args.batch_size,
-                                                                                     metrics.data[
-                                                                                         'loss'] / num_samples,
-                                                                                     metrics.data[
-                                                                                         'correct'] /
-                                                                                     metrics.data[
-                                                                                         'total']))
+                                                                                     metrics.avg('loss')
+                                                                                     ,
+                                                                                     metrics.avg('accuracy')))
 
 
 def print_summary(args, epoch, num_samples, metrics, mode=''):
     print(mode + "\n SUMMARY EPOCH:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}\n".format(epoch,
                                                                                                      num_samples,
                                                                                                      num_samples,
-                                                                                                     metrics.data[
-                                                                                                         'loss'] / num_samples,
-                                                                                                     metrics.data[
-                                                                                                         'correct'] /
-                                                                                                     metrics.data[
-                                                                                                         'total']))
+                                                                                                     metrics.avg(
+                                                                                                         'loss'),
+                                                                                                     metrics.avg(
+                                                                                                         'accuracy')))
 
 
 # TODO
