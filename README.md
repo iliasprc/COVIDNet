@@ -1,9 +1,70 @@
 # COVIDNet
+
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+
 My PyTorch implementation of COVID-Net, for the original work please see: https://github.com/lindawangg/COVID-Net
 
 Also Google Colab Notebook for plug-n-play training and evaluation here -->[IliasPap/covidnet.ipynb](https://gist.github.com/IliasPap/598e93ec50fe84f7953eef359d715916)
 
-## Results and Ablation Study 
+## Table of Contents
+
+* [Getting Started](#getting-started)
+  * [Installation](#installation)
+* [Usage](#usage)
+* [Roadmap](#roadmap)
+* [Contributing](#contributing)
+* [License](#license)
+* [Contact](#contact)
+* [Acknowledgements](#acknowledgements)
+
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+### Installation
+To install the required python packages use the following command 
+```
+pip install -r requirements.txt
+```
+<!-- USAGE EXAMPLES -->
+## Usage
+
+### Training
+
+The network takes as input an image of shape (N, 224, 224, 3) and outputs the softmax probabilities as (N, C), where N is the number of batches and C number of output classes.
+
+1. To train the Network from scratch simply do `python main.py` 
+ Arguments for training 
+ ```
+   -h, --help            show this help message and exit
+  --batch_size BATCH_SIZE
+                        batch size foe training
+  --log_interval LOG_INTERVAL
+                        steps to print metrics and loss
+  --dataset_name DATASET_NAME
+                        dataset name
+  --nEpochs NEPOCHS     total number of epochs
+  --device DEVICE       gpu device
+  --seed SEED           select seed number for reproducibility
+  --classes CLASSES     dataset classes
+  --lr LR               learning rate (default: 1e-3)
+  --weight_decay WEIGHT_DECAY
+                        weight decay (default: 1e-6)
+  --cuda                use gpu for speed-up
+  --tensorboard         use tensorboard for loggging and visualization
+  --resume PATH         path to latest checkpoint (default: none)
+  --model {COVIDNet_small,resnet18,mobilenet_v2,densenet169,COVIDNet_large}
+  --opt {sgd,adam,rmsprop}
+  --root_path ROOT_PATH
+                        path to dataset
+  --save SAVE           path to checkpoint save directory
+
+
+```
+### Results and Ablation Study 
 
 
 with my   implementation  of COVID-Net and comparison with CNNs pretrained on ImageNet dataset
@@ -35,8 +96,8 @@ Confusion Matrix on both datasets coming soon !!
 
 
 
-## Training and evaluation
-The network takes as input an image of shape (N, 224, 224, 3) and outputs the softmax probabilities as (N, 3), where N is the number of batches.
+
+
 
 ### 1) COVID-CT-Dataset
 
@@ -75,42 +136,21 @@ Chest radiography images distribution
 |  test |   100  |     100   |    10    |   210 |
 
 
-### Steps for training
-1. To train from scratch simply do `python main.py` 
- Arguments for training 
- `
- {
-  "batch_size",
-  "log_interval",
-  "dataset_name",
-  "nEpochs",
-  "device",
-  "seed",
-  "classes",
-  "lr",
-  "weight_decay",
-  "cuda",
-  "resume",
-  "model",
-  "opt",
-  "root_path",
-  "save_dir"
-  }
-`
-### Steps for inference
-Releasing soon
 
 
 
-## Requirements
-
-Python > 3.5
-
-PyTorch > 1.0
-
-Numpy
 
 
+[contributors-shield]: https://img.shields.io/github/contributors/IliasPap/COVIDNet.svg?style=flat-square
+[contributors-url]: https://github.com/IliasPap/COVIDNet/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/IliasPap/COVIDNet.svg?style=flat-square
+[forks-url]: https://github.com/IliasPap/COVIDNet/network/members
+
+[stars-shield]: https://img.shields.io/github/stars/IliasPap/COVIDNet.svg?style=flat-square
+[stars-url]: https://github.com/IliasPap/COVIDNet/stargazers
+
+[issues-shield]: https://img.shields.io/github/issues/IliasPap/COVIDNet.svg?style=flat-square
+[issues-url]: https://github.com/IliasPap/COVIDNet/issues
 
 
 
