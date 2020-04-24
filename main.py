@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import utils.util as util
 from trainer.train import initialize, train, validation
@@ -42,7 +42,7 @@ def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=4, help='batch size foe training')
     parser.add_argument('--log_interval', type=int, default=1000, help='steps to print metrics and loss')
-    parser.add_argument('--dataset_name', type=str, default="COVID_CT", help='dataset name')
+    parser.add_argument('--dataset_name', type=str, default="COVID_CT", help='dataset name COVIDx or COVID_CT')
     parser.add_argument('--nEpochs', type=int, default=250, help='total number of epochs')
     parser.add_argument('--device', type=int, default=0, help='gpu device')
     parser.add_argument('--seed', type=int, default=123, help='select seed number for reproducibility')
