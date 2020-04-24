@@ -4,12 +4,12 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/IliasPap/COVIDNet/blob/master/COVIDNet.ipynb#scrollTo=uz8BF21Lvl6a)
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/IliasPap/COVIDNet/blob/master/COVIDNet.ipynb#scrollTo=G9t--VlR7_F6)
 My PyTorch implementation of COVID-Net, for the original work please see: https://github.com/lindawangg/COVID-Net
 
 The purpose of this github is to reproduce results and not to claim state-of-the-art performance !!
 
-Also Google Colab Notebook for plug-n-play training and evaluation here -->[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/IliasPap/COVIDNet/blob/master/COVIDNet.ipynb#scrollTo=uz8BF21Lvl6a)
+Also Google Colab Notebook for plug-n-play training and evaluation here [![Open In Colab](https://colab.research.google.com/github/IliasPap/COVIDNet/blob/master/COVIDNet.ipynb#scrollTo=G9t--VlR7_F6)
 
 ## Table of Contents
 

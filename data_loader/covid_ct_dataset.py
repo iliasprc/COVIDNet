@@ -9,7 +9,7 @@ from torchvision import transforms
 
 
 class CovidCTDataset(Dataset):
-    def __init__(self, root_dir, txt_COVID, txt_NonCOVID, transform=None):
+    def __init__(self, mode,root_dir, txt_COVID, txt_NonCOVID, transform=None):
         """
         Args:
             txt_path (string): Path to the txt file with annotations.
@@ -35,7 +35,26 @@ class CovidCTDataset(Dataset):
         for c in range(self.num_cls):
             cls_list = [[os.path.join(self.root_dir, self.classes[c], item), c] for item in read_txt(self.txt_path[c])]
             self.img_list += cls_list
-        self.transform = transform
+
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        train_transformer = transforms.Compose([
+            transforms.Resize(256),
+            transforms.RandomResizedCrop((224), scale=(0.5, 1.0)),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize
+        ])
+
+        val_transformer = transforms.Compose([
+            transforms.Resize(224),
+            transforms.CenterCrop(224),
+            transforms.ToTensor(),
+            normalize
+        ])
+        if mode == 'train':
+            self.transform = train_transformer
+        else:
+            self.transform = val_transformer
         print('samples = ', len(self.img_list))
 
     def __len__(self):

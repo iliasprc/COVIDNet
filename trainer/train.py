@@ -20,21 +20,7 @@ def initialize(args):
     if (args.cuda):
         model.cuda()
 
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-    train_transformer = transforms.Compose([
-        transforms.Resize(256),
-        transforms.RandomResizedCrop((224), scale=(0.5, 1.0)),
-        transforms.RandomHorizontalFlip(),
-        transforms.ToTensor(),
-        normalize
-    ])
 
-    val_transformer = transforms.Compose([
-        transforms.Resize(224),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        normalize
-    ])
 
     train_params = {'batch_size': args.batch_size,
                     'shuffle': True,
@@ -56,18 +42,15 @@ def initialize(args):
         test_generator = None
 
     elif args.dataset_name == 'COVID_CT':
-        train_loader = CovidCTDataset(root_dir='data/covid_ct_dataset',
-                                      txt_COVID='data/covid_ct_dataset/trainCT_COVID.txt',
-                                      txt_NonCOVID='data/covid_ct_dataset/trainCT_NonCOVID.txt',
-                                      transform=train_transformer)
-        val_loader = CovidCTDataset(root_dir='data/covid_ct_dataset',
-                                    txt_COVID='data/covid_ct_dataset/valCT_COVID.txt',
-                                    txt_NonCOVID='data/covid_ct_dataset/valCT_NonCOVID.txt',
-                                    transform=val_transformer)
-        test_loader = CovidCTDataset(root_dir='data/covid_ct_dataset',
-                                     txt_COVID='data/covid_ct_dataset/testCT_COVID.txt',
-                                     txt_NonCOVID='data/covid_ct_dataset/testCT_NonCOVID.txt',
-                                     transform=val_transformer)
+        train_loader = CovidCTDataset('train',root_dir='./data/covid_ct_dataset',
+                                      txt_COVID='./data/covid_ct_dataset/trainCT_COVID.txt',
+                                      txt_NonCOVID='./data/covid_ct_dataset/trainCT_NonCOVID.txt')
+        val_loader = CovidCTDataset('val',root_dir='./data/covid_ct_dataset',
+                                    txt_COVID='./data/covid_ct_dataset/valCT_COVID.txt',
+                                    txt_NonCOVID='./data/covid_ct_dataset/valCT_NonCOVID.txt')
+        test_loader = CovidCTDataset('test',root_dir='./data/covid_ct_dataset',
+                                     txt_COVID='./data/covid_ct_dataset/testCT_COVID.txt',
+                                     txt_NonCOVID='./data/covid_ct_dataset/testCT_NonCOVID.txt')
 
         training_generator = DataLoader(train_loader, **train_params)
         val_generator = DataLoader(val_loader, **test_params)
