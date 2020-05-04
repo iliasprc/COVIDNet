@@ -10,6 +10,24 @@ from torchvision import transforms
 COVIDxDICT = {'pneumonia': 0, 'normal': 1, 'COVID-19': 2}
 
 
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+train_transformer = transforms.Compose([
+    transforms.Resize(256),
+    transforms.RandomResizedCrop((224), scale=(0.5, 1.0)),
+    transforms.RandomHorizontalFlip(),
+    transforms.ToTensor(),
+    normalize
+])
+
+val_transformer = transforms.Compose([
+    transforms.Resize(224),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    normalize
+])
+
+
+
 class COVIDxDataset(Dataset):
     """
     Code for reading the COVIDxDataset
@@ -25,10 +43,13 @@ class COVIDxDataset(Dataset):
         trainfile = './data/covid_x_dataset/train_split_v2.txt'
         if (mode == 'train'):
             self.paths, self.labels = read_filepaths(trainfile)
+            self.transform = train_transformer
         elif (mode == 'test'):
             self.paths, self.labels = read_filepaths(testfile)
+            self.transform = val_transformer
         print("{} examples =  {}".format(mode, len(self.paths)))
         self.mode = mode
+        
 
     def __len__(self):
         return len(self.paths)
@@ -46,11 +67,7 @@ class COVIDxDataset(Dataset):
         image = Image.open(img_path).convert('RGB')
         image = image.resize(dim)
 
-        t = transforms.ToTensor()
 
-        norm = transforms.Normalize(mean=[0.5, 0.5, 0.5],
-                                    std=[1, 1, 1])
-
-        image_tensor = norm(t(image))
+        image_tensor = self.transform(image)
 
         return image_tensor
