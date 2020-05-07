@@ -44,7 +44,7 @@ The network takes as input an image of shape (N, 224, 224, 3) and outputs the so
  ```
    -h, --help            show this help message and exit
   --batch_size BATCH_SIZE
-                        batch size foe training
+                        batch size for training
   --log_interval LOG_INTERVAL
                         steps to print metrics and loss
   --dataset_name DATASET_NAME
