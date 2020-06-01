@@ -146,16 +146,16 @@ Chest radiography images distribution
 
 
 
-[contributors-shield]: https://img.shields.io/github/contributors/IliasPap/COVIDNet.svg?style=flat-square
-[contributors-url]: https://github.com/IliasPap/COVIDNet/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/IliasPap/COVIDNet.svg?style=flat-square
-[forks-url]: https://github.com/IliasPap/COVIDNet/network/members
+[contributors-shield]: https://img.shields.io/github/contributors/iliasprc/COVIDNet.svg?style=flat-square
+[contributors-url]: https://github.com/iliasprc/COVIDNet/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/iliasprc/COVIDNet.svg?style=flat-square
+[forks-url]: https://github.com/iliasprc/COVIDNet/network/members
 
-[stars-shield]: https://img.shields.io/github/stars/IliasPap/COVIDNet.svg?style=flat-square
-[stars-url]: https://github.com/IliasPap/COVIDNet/stargazers
+[stars-shield]: https://img.shields.io/github/stars/iliasprc/COVIDNet.svg?style=flat-square
+[stars-url]: https://github.com/iliasprc/COVIDNet/stargazers
 
-[issues-shield]: https://img.shields.io/github/issues/IliasPap/COVIDNet.svg?style=flat-square
-[issues-url]: https://github.com/IliasPap/COVIDNet/issues
+[issues-shield]: https://img.shields.io/github/issues/iliasprc/COVIDNet.svg?style=flat-square
+[issues-url]: https://github.com/iliasprc/COVIDNet/issues
 
 
 
