@@ -30,9 +30,9 @@ def initialize(args):
                    'shuffle': False,
                    'num_workers': 1}
     if args.dataset_name == 'COVIDx':
-        train_loader = COVIDxDataset(mode='train', n_classes=args.classes, dataset_path=args.dataset,
+        train_loader = COVIDxDataset(mode='train', n_classes=args.classes, dataset_path=args.dataset_name,
                                      dim=(224, 224))
-        val_loader = COVIDxDataset(mode='test', n_classes=args.classes, dataset_path=args.dataset,
+        val_loader = COVIDxDataset(mode='test', n_classes=args.classes, dataset_path=args.dataset_name,
                                    dim=(224, 224))
 
         test_loader = None
