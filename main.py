@@ -3,7 +3,7 @@ import argparse
 import numpy as np
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-# from torch.utils.tensorboard import SummaryWriter
+from torch.utils.tensorboard import SummaryWriter
 
 import utils.util as util
 from trainer.train import initialize, train, validation
