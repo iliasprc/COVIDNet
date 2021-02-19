@@ -11,7 +11,6 @@ The purpose of this github is to reproduce results and not to claim state-of-the
 
 Also Google Colab Notebook for plug-n-play training and evaluation here [![Open In Colab](https://colab.research.google.com/github/IliasPap/COVIDNet/blob/master/COVIDNet.ipynb#scrollTo=G9t--VlR7_F6)
 
-# UPDATES COMING SOON ~~ MID SEPTEMBER
 
 ## Table of Contents
 
