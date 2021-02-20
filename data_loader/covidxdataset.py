@@ -11,20 +11,6 @@ COVIDxDICT = {'pneumonia': 0, 'normal': 1, 'COVID-19': 2}
 
 
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-train_transformer = transforms.Compose([
-    transforms.Resize(256),
-    transforms.RandomResizedCrop((224), scale=(0.5, 1.0)),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    normalize
-])
-
-val_transformer = transforms.Compose([
-    transforms.Resize(224),
-    transforms.CenterCrop(224),
-    transforms.ToTensor(),
-    normalize
-])
 
 
 
@@ -43,10 +29,11 @@ class COVIDxDataset(Dataset):
         trainfile = './data/covid_x_dataset/train_split_v2.txt'
         if (mode == 'train'):
             self.paths, self.labels = read_filepaths(trainfile)
-            self.transform = train_transformer
+            self.do_augmentation = True
         elif (mode == 'test'):
             self.paths, self.labels = read_filepaths(testfile)
             self.transform = val_transformer
+            self.do_augmentation =  False
         print("{} examples =  {}".format(mode, len(self.paths)))
         self.mode = mode
         
@@ -67,7 +54,25 @@ class COVIDxDataset(Dataset):
         image = Image.open(img_path).convert('RGB')
         image = image.resize(dim)
 
+        if self.do_augmentation:
+            transform = transforms.Compose([
+                transforms.Resize(256),
+                transforms.RandomResizedCrop((224), scale=(0.5, 1.0)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
+        else:
+            transform = transforms.Compose([
+                transforms.Resize(224),
+                transforms.CenterCrop(224),
+                transforms.ToTensor(),
+                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+            ])
 
-        image_tensor = self.transform(image)
+
+
+        image_tensor = transform(image)
+
 
         return image_tensor

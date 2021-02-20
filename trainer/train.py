@@ -2,12 +2,11 @@ import os
 
 import torch
 import torch.nn as nn
-import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 
 from data_loader.covid_ct_dataset import CovidCTDataset
 from data_loader.covidxdataset import COVIDxDataset
-from model.metric import accuracy
+from model.metric import accuracy, sensitivity, positive_predictive_value
 from utils.util import print_stats, print_summary, select_model, select_optimizer, MetricTracker
 
 
@@ -19,8 +18,6 @@ def initialize(args):
     optimizer = select_optimizer(args, model)
     if (args.cuda):
         model.cuda()
-
-
 
     train_params = {'batch_size': args.batch_size,
                     'shuffle': True,
@@ -42,13 +39,13 @@ def initialize(args):
         test_generator = None
 
     elif args.dataset_name == 'COVID_CT':
-        train_loader = CovidCTDataset('train',root_dir='./data/covid_ct_dataset',
+        train_loader = CovidCTDataset('train', root_dir='./data/covid_ct_dataset',
                                       txt_COVID='./data/covid_ct_dataset/trainCT_COVID.txt',
                                       txt_NonCOVID='./data/covid_ct_dataset/trainCT_NonCOVID.txt')
-        val_loader = CovidCTDataset('val',root_dir='./data/covid_ct_dataset',
+        val_loader = CovidCTDataset('val', root_dir='./data/covid_ct_dataset',
                                     txt_COVID='./data/covid_ct_dataset/valCT_COVID.txt',
                                     txt_NonCOVID='./data/covid_ct_dataset/valCT_NonCOVID.txt')
-        test_loader = CovidCTDataset('test',root_dir='./data/covid_ct_dataset',
+        test_loader = CovidCTDataset('test', root_dir='./data/covid_ct_dataset',
                                      txt_COVID='./data/covid_ct_dataset/testCT_COVID.txt',
                                      txt_NonCOVID='./data/covid_ct_dataset/testCT_NonCOVID.txt')
 
@@ -63,9 +60,10 @@ def train(args, model, trainloader, optimizer, epoch, writer):
     model.train()
     criterion = nn.CrossEntropyLoss(reduction='mean')
 
-    metric_ftns = ['loss', 'correct', 'total', 'accuracy']
+    metric_ftns = ['loss', 'correct', 'total', 'accuracy', 'ppv', 'sensitivity']
     train_metrics = MetricTracker(*[m for m in metric_ftns], writer=writer, mode='train')
     train_metrics.reset()
+    confusion_matrix = torch.zeros(args.classes, args.classes)
 
     for batch_idx, input_tensors in enumerate(trainloader):
         optimizer.zero_grad()
@@ -81,12 +79,19 @@ def train(args, model, trainloader, optimizer, epoch, writer):
 
         optimizer.step()
         correct, total, acc = accuracy(output, target)
+        pred = torch.argmax(output, dim=1)
 
         num_samples = batch_idx * args.batch_size + 1
-        train_metrics.update_all_metrics({'correct': correct, 'total': total, 'loss': loss.item(), 'accuracy': acc},
-                                         writer_step=(epoch - 1) * len(trainloader) + batch_idx)
+        train_metrics.update_all_metrics(
+            {'correct': correct, 'total': total, 'loss': loss.item(), 'accuracy': acc},
+            writer_step=(epoch - 1) * len(trainloader) + batch_idx)
         print_stats(args, epoch, num_samples, trainloader, train_metrics)
-
+        for t, p in zip(target.cpu().view(-1), pred.cpu().view(-1)):
+            confusion_matrix[t.long(), p.long()] += 1
+    s = sensitivity(confusion_matrix.numpy())
+    ppv = positive_predictive_value(confusion_matrix.numpy())
+    train_metrics.update('sensitivity', s, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
+    train_metrics.update('ppv', ppv, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
     print_summary(args, epoch, num_samples, train_metrics, mode="Training")
     return train_metrics
 
@@ -113,13 +118,19 @@ def validation(args, model, testloader, epoch, writer):
 
             correct, total, acc = accuracy(output, target)
             num_samples = batch_idx * args.batch_size + 1
-            _, preds = torch.max(output, 1)
-            for t, p in zip(target.cpu().view(-1), preds.cpu().view(-1)):
+            _, pred = torch.max(output, 1)
+
+            num_samples = batch_idx * args.batch_size + 1
+            for t, p in zip(target.cpu().view(-1), pred.cpu().view(-1)):
                 confusion_matrix[t.long(), p.long()] += 1
-            val_metrics.update_all_metrics({'correct': correct, 'total': total, 'loss': loss.item(), 'accuracy': acc},
-                                           writer_step=(epoch - 1) * len(testloader) + batch_idx)
+            val_metrics.update_all_metrics(
+                {'correct': correct, 'total': total, 'loss': loss.item(), 'accuracy': acc},
+                writer_step=(epoch - 1) * len(testloader) + batch_idx)
 
     print_summary(args, epoch, num_samples, val_metrics, mode="Validation")
-
+    s = sensitivity(confusion_matrix.numpy())
+    ppv = positive_predictive_value(confusion_matrix.numpy())
+    val_metrics.update('sensitivity', s, writer_step=(epoch - 1) * len(testloader) + batch_idx)
+    val_metrics.update('ppv', ppv, writer_step=(epoch - 1) * len(testloader) + batch_idx)
     print('Confusion Matrix\n{}'.format(confusion_matrix.cpu().numpy()))
     return val_metrics, confusion_matrix

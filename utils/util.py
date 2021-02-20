@@ -162,41 +162,41 @@ class MetricTracker:
         return s
 
 
-class Metrics:
-    def __init__(self, path, keys=None, writer=None):
-        self.writer = writer
-
-        self.data = {'correct': 0,
-                     'total': 0,
-                     'loss': 0,
-                     'accuracy': 0,
-                     }
-        self.save_path = path
-
-    def reset(self):
-        for key in self.data:
-            self.data[key] = 0
-
-    def update_key(self, key, value, n=1):
-        if self.writer is not None:
-            self.writer.add_scalar(key, value)
-        self.data[key] += value
-
-    def update(self, values):
-        for key in self.data:
-            self.data[key] += values[key]
-
-    def avg_acc(self):
-        return self.data['correct'] / self.data['total']
-
-    def avg_loss(self):
-        return self.data['loss'] / self.data['total']
-
-    def save(self):
-        with open(self.save_path, 'w') as save_file:
-            a = 0  # csv.writer()
-            # TODO
-
+# class Metrics:
+#     def __init__(self, path, keys=None, writer=None):
+#         self.writer = writer
+#
+#         self.data = {'correct': 0,
+#                      'total': 0,
+#                      'loss': 0,
+#                      'accuracy': 0,
+#                      }
+#         self.save_path = path
+#
+#     def reset(self):
+#         for key in self.data:
+#             self.data[key] = 0
+#
+#     def update_key(self, key, value, n=1):
+#         if self.writer is not None:
+#             self.writer.add_scalar(key, value)
+#         self.data[key] += value
+#
+#     def update(self, values):
+#         for key in self.data:
+#             self.data[key] += values[key]
+#
+#     def avg_acc(self):
+#         return self.data['correct'] / self.data['total']
+#
+#     def avg_loss(self):
+#         return self.data['loss'] / self.data['total']
+#
+#     def save(self):
+#         with open(self.save_path, 'w') as save_file:
+#             a = 0  # csv.writer()
+#             # TODO
+#
 
 def select_model(args):
     if args.model == 'COVIDNet_small':
@@ -244,17 +244,3 @@ def print_summary(args, epoch, num_samples, metrics, mode=''):
                                                                                                      metrics.avg(
                                                                                                          'accuracy')))
 
-
-# TODO
-def confusion_matrix(nb_classes):
-    confusion_matrix = torch.zeros(nb_classes, nb_classes)
-    with torch.no_grad():
-        for i, (inputs, classes) in enumerate(dataloaders['val']):
-            inputs = inputs.to(device)
-            classes = classes.to(device)
-            outputs = model_ft(inputs)
-            _, preds = torch.max(outputs, 1)
-            for t, p in zip(classes.view(-1), preds.view(-1)):
-                confusion_matrix[t.long(), p.long()] += 1
-
-    print(confusion_matrix)

@@ -1,3 +1,5 @@
+import numpy as np
+import sklearn.metrics
 import torch
 
 
@@ -18,3 +20,62 @@ def top_k_acc(output, target, k=3):
         for i in range(k):
             correct += torch.sum(pred[:, i] == target).item()
     return correct / len(target)
+
+
+def confusion_matrix(predictions, targets):
+    return sklearn.metrics.confusion_matrix(targets, predictions)
+
+
+# def sensitivity(predictions, targets):
+#     cnf_matrix = sklearn.metrics.confusion_matrix(targets, predictions)
+#
+#     #print(cnf_matrix)
+#
+#     FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
+#     FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
+#     TP = np.diag(cnf_matrix)
+#     TN = cnf_matrix.sum() - (FP + FN + TP)
+#
+#     return TP / (TP + FN)
+#
+#
+#
+# def  positive_predictive_value(predictions, targets):
+#     cnf_matrix = sklearn.metrics.confusion_matrix(targets, predictions)
+#
+#     #print(cnf_matrix)
+#
+#     FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
+#     FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
+#     TP = np.diag(cnf_matrix)
+#     TN = cnf_matrix.sum() - (FP + FN + TP)
+#
+#     return TP / (TP + FP)
+
+
+
+def sensitivity( cnf_matrix):
+
+
+    #print(cnf_matrix)
+
+    FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
+    FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
+    TP = np.diag(cnf_matrix)
+    TN = cnf_matrix.sum() - (FP + FN + TP)
+
+    return TP / (TP + FN)
+
+
+
+def  positive_predictive_value(cnf_matrix):
+
+
+    #print(cnf_matrix)
+
+    FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
+    FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
+    TP = np.diag(cnf_matrix)
+    TN = cnf_matrix.sum() - (FP + FN + TP)
+
+    return TP / (TP + FP)
