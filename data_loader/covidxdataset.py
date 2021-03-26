@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import Dataset
 import glob
 import numpy as np
-from utils import read_filepaths
+from utils import read_filepaths,read_filepaths2
 from PIL import Image
 from torchvision import transforms
 
@@ -19,20 +19,20 @@ class COVIDxDataset(Dataset):
     Code for reading the COVIDxDataset
     """
 
-    def __init__(self, mode, n_classes=3, dataset_path='./datasets', dim=(224, 224)):
+    def __init__(self, mode, n_classes=3, dataset_path='./data', dim=(224, 224)):
         self.root = str(dataset_path) + '/' + mode + '/'
 
         self.CLASSES = n_classes
         self.dim = dim
         self.COVIDxDICT = {'pneumonia': 0, 'normal': 1, 'COVID-19': 2}
-        testfile = './data/covid_x_dataset/test_split_v2.txt'
-        trainfile = './data/covid_x_dataset/train_split_v2.txt'
+        testfile = './data/test_split.txt'
+        trainfile = './data/train_split.txt'
         if (mode == 'train'):
-            self.paths, self.labels = read_filepaths(trainfile)
+            self.paths, self.labels = read_filepaths2(trainfile)
             self.do_augmentation = True
         elif (mode == 'test'):
-            self.paths, self.labels = read_filepaths(testfile)
-            self.transform = val_transformer
+            self.paths, self.labels = read_filepaths2(testfile)
+
             self.do_augmentation =  False
         print("{} examples =  {}".format(mode, len(self.paths)))
         self.mode = mode

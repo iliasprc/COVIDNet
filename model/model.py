@@ -4,6 +4,7 @@ import numpy as np
 import torch.nn as nn
 
 import torch.nn.functional as F
+from IPython.utils.path import target_outdated
 from torchvision import models
 
 class Flatten(nn.Module):
@@ -191,4 +192,5 @@ class CNN(nn.Module):
             self.cnn.classifier = nn.Linear(1280, classes)
 
     def forward(self, x):
+
         return self.cnn(x)

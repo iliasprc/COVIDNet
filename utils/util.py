@@ -9,6 +9,7 @@ import torch
 import torch.optim as optim
 
 from model.model import CovidNet, CNN
+from model.vit import ViT
 
 
 def write_score(writer, iter, mode, metrics):
@@ -120,6 +121,21 @@ def read_filepaths(file):
             paths.append(path)
             labels.append(label)
     return paths, labels
+def read_filepaths2(file):
+    paths, labels = [], []
+    with open(file, 'r') as f:
+        lines = f.read().splitlines()
+
+        for idx, line in enumerate(lines):
+            print(line,line.split('|'))
+            if ('/ c o' in line):
+                break
+            path, label, dataset = line.split('|')
+            path = path.split(' ')[-1]
+
+            paths.append(path)
+            labels.append(label)
+    return paths, labels
 
 
 class MetricTracker:
@@ -152,7 +168,17 @@ class MetricTracker:
 
     def result(self):
         return dict(self._data.average)
+    def calc_all_metrics(self):
+        """
+        Calculates string with all the metrics
+        Returns:
+        """
+        s = ''
+        d = dict(self._data.average)
+        for key in dict(self._data.average):
+            s += f'{key} {d[key]:7.4f}\t'
 
+        return s
     def print_all_metrics(self):
         s = ''
         d = dict(self._data.average)
@@ -204,8 +230,20 @@ def select_model(args):
 
     elif args.model == 'COVIDNet_large':
         return CovidNet('large', n_classes=args.classes)
-    elif args.model in ['resnet18', 'mobilenet2', 'densenet169', 'resneXt']:
+    elif args.model in ['resnet18', 'mobilenet_v2', 'densenet169', 'resneXt']:
         return CNN(args.classes, args.model)
+    elif args.model == 'vit':
+        return ViT(
+            image_size=224,
+            patch_size=32,
+            num_classes=3,
+            dim=512,
+            depth=6,
+            heads=16,
+            mlp_dim=1024,
+            dropout=0.1,
+            emb_dropout=0.1
+        )
 
 
 def select_optimizer(args, model):
@@ -226,13 +264,13 @@ def read_txt(txt_path):
 
 def print_stats(args, epoch, num_samples, trainloader, metrics):
     if (num_samples % args.log_interval == 1):
-        print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}".format(epoch,
+        print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}\tPPV:{:.3f}\tsensitivity{:.3f}".format(epoch,
                                                                                      num_samples,
                                                                                      len(
                                                                                          trainloader) * args.batch_size,
                                                                                      metrics.avg('loss')
                                                                                      ,
-                                                                                     metrics.avg('accuracy')))
+                                                                                     metrics.avg('accuracy'), metrics.avg('ppv'), metrics.avg('sensitivity')))
 
 
 def print_summary(args, epoch, num_samples, metrics, mode=''):
@@ -243,4 +281,3 @@ def print_summary(args, epoch, num_samples, metrics, mode=''):
                                                                                                          'loss'),
                                                                                                      metrics.avg(
                                                                                                          'accuracy')))
-

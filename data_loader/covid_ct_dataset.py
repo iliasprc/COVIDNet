@@ -1,21 +1,20 @@
 import os
+
 import torch
-from torch.utils.data import Dataset
-import glob
-import numpy as np
-from utils import read_filepaths, read_txt
 from PIL import Image
+from torch.utils.data import Dataset
 from torchvision import transforms
+
+from utils import read_txt
 
 
 class CovidCTDataset(Dataset):
-    def __init__(self, mode,root_dir, txt_COVID, txt_NonCOVID, transform=None):
+    def __init__(self, mode, root_dir, txt_COVID, txt_NonCOVID):
         """
         Args:
             txt_path (string): Path to the txt file with annotations.
             root_dir (string): Directory with all the images.
-            transform (callable, optional): Optional transform to be applied
-                on a sample.
+
         File structure:
         - root_dir
             - CT_COVID
@@ -43,7 +42,7 @@ class CovidCTDataset(Dataset):
             transforms.RandomRotation(15),
             transforms.RandomHorizontalFlip(p=0.1),
             transforms.RandomVerticalFlip(p=0.1),
-            transforms.ColorJitter(brightness=0.2,contrast=0.2,saturation=0.2,hue=0.2),
+            transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2),
             transforms.ToTensor(),
             normalize
         ])
