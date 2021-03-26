@@ -35,12 +35,12 @@ def main():
 
         best_pred_loss = util.save_model(model, optimizer, args, val_metrics, epoch, best_pred_loss, confusion_matrix)
 
-        scheduler.step(val_metrics.avg_loss())
+        #scheduler.step(val_metrics.avg_loss())
 
 
 def get_arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=2, help='batch size for training')
+    parser.add_argument('--batch_size', type=int, default=4, help='batch size for training')
     parser.add_argument('--log_interval', type=int, default=1000, help='steps to print metrics and loss')
     parser.add_argument('--dataset_name', type=str, default="COVIDx", help='dataset name COVIDx or COVID_CT')
     parser.add_argument('--nEpochs', type=int, default=250, help='total number of epochs')
@@ -49,7 +49,7 @@ def get_arguments():
     parser.add_argument('--classes', type=int, default=3, help='dataset classes')
     parser.add_argument('--lr', default=1e-2, type=float,
                         help='learning rate (default: 1e-3)')
-    parser.add_argument('--weight_decay', default=1e-7, type=float,
+    parser.add_argument('--weight_decay', default=1e-6, type=float,
                         help='weight decay (default: 1e-6)')
     parser.add_argument('--cuda', action='store_true', default=True, help='use gpu for speed-up')
     parser.add_argument('--tensorboard', action='store_true', default=True,
@@ -62,7 +62,7 @@ def get_arguments():
                         choices=('sgd', 'adam', 'rmsprop'))
     parser.add_argument('--root_path', type=str, default='./data/data',
                         help='path to dataset ')
-    parser.add_argument('--save', type=str, default='/saved/COVIDNet' + util.datestr(),
+    parser.add_argument('--save', type=str, default='./saved/COVIDNet' + util.datestr(),
                         help='path to checkpoint save directory ')
     args = parser.parse_args()
     return args

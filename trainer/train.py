@@ -90,6 +90,7 @@ def train(args, model, trainloader, optimizer, epoch, writer):
             confusion_matrix[t.long(), p.long()] += 1
     s = sensitivity(confusion_matrix.numpy())
     ppv = positive_predictive_value(confusion_matrix.numpy())
+    print(f" s {s} ,ppv {ppv}")
     train_metrics.update('sensitivity', s, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
     train_metrics.update('ppv', ppv, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
     print_summary(args, epoch, num_samples, train_metrics, mode="Training")
@@ -100,7 +101,7 @@ def validation(args, model, testloader, epoch, writer):
     model.eval()
     criterion = nn.CrossEntropyLoss(reduction='mean')
 
-    metric_ftns = ['loss', 'correct', 'total', 'accuracy']
+    metric_ftns = ['loss', 'correct', 'total', 'accuracy','ppv', 'sensitivity']
     val_metrics = MetricTracker(*[m for m in metric_ftns], writer=writer, mode='val')
     val_metrics.reset()
     confusion_matrix = torch.zeros(args.classes, args.classes)
@@ -130,6 +131,7 @@ def validation(args, model, testloader, epoch, writer):
     print_summary(args, epoch, num_samples, val_metrics, mode="Validation")
     s = sensitivity(confusion_matrix.numpy())
     ppv = positive_predictive_value(confusion_matrix.numpy())
+    print(f" s {s} ,ppv {ppv}")
     val_metrics.update('sensitivity', s, writer_step=(epoch - 1) * len(testloader) + batch_idx)
     val_metrics.update('ppv', ppv, writer_step=(epoch - 1) * len(testloader) + batch_idx)
     print('Confusion Matrix\n{}'.format(confusion_matrix.cpu().numpy()))

@@ -64,7 +64,7 @@ def sensitivity( cnf_matrix):
     TP = np.diag(cnf_matrix)
     TN = cnf_matrix.sum() - (FP + FN + TP)
 
-    return TP / (TP + FN)
+    return TP.sum() / (TP + FN).sum()
 
 
 
@@ -77,5 +77,8 @@ def  positive_predictive_value(cnf_matrix):
     FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
     TP = np.diag(cnf_matrix)
     TN = cnf_matrix.sum() - (FP + FN + TP)
-
-    return TP / (TP + FP)
+    # print(TP)
+    # print(FP)
+    # print(TP / (TP + FP))
+    #print(TP.sum() / (TP + FP).sum())
+    return TP.sum() / (TP + FP).sum()

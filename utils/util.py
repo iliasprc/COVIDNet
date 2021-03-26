@@ -59,7 +59,7 @@ def save_checkpoint(state, is_best, path, filename='last'):
 
 
 def save_model(model, optimizer, args, metrics, epoch, best_pred_loss, confusion_matrix):
-    loss = metrics.data['loss']
+    loss = metrics._data.average['loss']
     save_path = args.save
     make_dirs(save_path)
 
@@ -73,7 +73,7 @@ def save_model(model, optimizer, args, metrics, epoch, best_pred_loss, confusion
         save_checkpoint({'epoch': epoch,
                          'state_dict': model.state_dict(),
                          'optimizer': optimizer.state_dict(),
-                         'metrics': metrics.data},
+                         'loss':  loss },
                         is_best, save_path, args.model + "_best")
         np.save(save_path + 'best_confusion_matrix.npy', confusion_matrix.cpu().numpy())
 
@@ -81,7 +81,7 @@ def save_model(model, optimizer, args, metrics, epoch, best_pred_loss, confusion
         save_checkpoint({'epoch': epoch,
                          'state_dict': model.state_dict(),
                          'optimizer': optimizer.state_dict(),
-                         'metrics': metrics.data},
+                         'loss':  loss },
                         False, save_path, args.model + "_last")
 
     return best_pred_loss
