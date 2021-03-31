@@ -97,7 +97,7 @@ class CovidNet(nn.Module):
     def forward(self, x):
         return self.__forward__(x)
 
-    def forward_large_net(self, x):
+    def forward_large_net(self, x,target = None):
         x = F.max_pool2d(F.relu(self.conv1(x)), 2)
         out_conv1_1x1 = self.conv1_1x1(x)
 

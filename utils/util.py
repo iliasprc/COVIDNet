@@ -1,3 +1,5 @@
+import argparse
+import csv
 import json
 import os
 import time
@@ -52,42 +54,72 @@ def datestr():
     return '{}{:02}{:02}_{:02}{:02}'.format(now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min)
 
 
-def save_checkpoint(state, is_best, path, filename='last'):
+def save_checkpoint(state, path, filename='last'):
     name = os.path.join(path, filename + '_checkpoint.pth.tar')
     print(name)
     torch.save(state, name)
 
 
-def save_model(model, optimizer, args, metrics, epoch, best_pred_loss, confusion_matrix):
-    loss = metrics._data.average['loss']
-    save_path = args.save
+def load_checkpoint(checkpoint, model, strict=True, optimizer=None, load_seperate_layers=False):
+    """Loads model parameters (state_dict) from file_path. If optimizer is provided, loads state_dict of
+    optimizer assuming it is present in checkpoint.
+    Args:
+        checkpoint: (string) filename which needs to be loaded
+        model: (torch.nn.Module) model for which the parameters are loaded
+        optimizer: (torch.optim) optional: resume optimizer from checkpoint
+    """
+    checkpoint1 = torch.load(checkpoint, map_location='cpu')
+    print(checkpoint1.keys())
+    pretrained_dict = checkpoint1['model_dict']
+    model_dict = model.state_dict()
+    print(pretrained_dict.keys())
+    print(model_dict.keys())
+    # # # 1. filter out unnecessary keys
+    # # pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
+    pretrained_dictnew = {}
+    for k, v in pretrained_dict.items():
+        if 'module.' in k:
+            k = k[7:]
+        pretrained_dictnew[k] = v
+
+    print(pretrained_dictnew.keys())
+
+    if not os.path.exists(checkpoint):
+        raise ("File doesn't exist {}".format(checkpoint))
+
+    if (not load_seperate_layers):
+        # model.load_state_dict(checkpoint1['model_dict'] , strict=strict)p
+        model.load_state_dict(pretrained_dictnew, strict=strict)
+
+    epoch = 0
+    if optimizer != None:
+        optimizer.load_state_dict(checkpoint['optimizer_dict'])
+
+    return checkpoint1, epoch
+
+
+def save_model(cpkt_dir, model, optimizer, loss, epoch, name):
+    save_path = cpkt_dir
     make_dirs(save_path)
 
-    with open(save_path + '/training_arguments.txt', 'w') as f:
-        json.dump(args.__dict__, f, indent=2)
-
-    is_best = False
-    if loss < best_pred_loss:
-        is_best = True
-        best_pred_loss = loss
-        save_checkpoint({'epoch': epoch,
-                         'state_dict': model.state_dict(),
-                         'optimizer': optimizer.state_dict(),
-                         'loss':  loss },
-                        is_best, save_path, args.model + "_best")
-        np.save(save_path + 'best_confusion_matrix.npy', confusion_matrix.cpu().numpy())
-
-    else:
-        save_checkpoint({'epoch': epoch,
-                         'state_dict': model.state_dict(),
-                         'optimizer': optimizer.state_dict(),
-                         'loss':  loss },
-                        False, save_path, args.model + "_last")
-
-    return best_pred_loss
+    state = {'epoch': epoch,
+             'state_dict': model.state_dict(),
+             'optimizer': optimizer.state_dict(),
+             'loss': loss}
+    name = os.path.join(cpkt_dir, name + '_checkpoint.pth.tar')
+    print(name)
+    torch.save(state, name)
 
 
 def make_dirs(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
+
+def make_dirs_if_not_present(path):
+    """
+    creates new directory if not present
+    """
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -121,13 +153,15 @@ def read_filepaths(file):
             paths.append(path)
             labels.append(label)
     return paths, labels
+
+
 def read_filepaths2(file):
     paths, labels = [], []
     with open(file, 'r') as f:
         lines = f.read().splitlines()
 
         for idx, line in enumerate(lines):
-            print(line,line.split('|'))
+            # print(line, line.split('|'))
             if ('/ c o' in line):
                 break
             path, label, dataset = line.split('|')
@@ -144,7 +178,7 @@ class MetricTracker:
         self.writer = writer
         self.mode = mode + '/'
         self.keys = keys
-        print(self.keys)
+        # print(self.keys)
         self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
         self.reset()
 
@@ -155,7 +189,7 @@ class MetricTracker:
     def update(self, key, value, n=1, writer_step=1):
         if self.writer is not None:
             self.writer.add_scalar(self.mode + key, value, writer_step)
-        self._data.total[key] += value * n
+        self._data.total[key] += value
         self._data.counts[key] += n
         self._data.average[key] = self._data.total[key] / self._data.counts[key]
 
@@ -168,6 +202,7 @@ class MetricTracker:
 
     def result(self):
         return dict(self._data.average)
+
     def calc_all_metrics(self):
         """
         Calculates string with all the metrics
@@ -179,6 +214,7 @@ class MetricTracker:
             s += f'{key} {d[key]:7.4f}\t'
 
         return s
+
     def print_all_metrics(self):
         s = ''
         d = dict(self._data.average)
@@ -186,73 +222,6 @@ class MetricTracker:
             s += "{} {:.4f}\t".format(key, d[key])
 
         return s
-
-
-# class Metrics:
-#     def __init__(self, path, keys=None, writer=None):
-#         self.writer = writer
-#
-#         self.data = {'correct': 0,
-#                      'total': 0,
-#                      'loss': 0,
-#                      'accuracy': 0,
-#                      }
-#         self.save_path = path
-#
-#     def reset(self):
-#         for key in self.data:
-#             self.data[key] = 0
-#
-#     def update_key(self, key, value, n=1):
-#         if self.writer is not None:
-#             self.writer.add_scalar(key, value)
-#         self.data[key] += value
-#
-#     def update(self, values):
-#         for key in self.data:
-#             self.data[key] += values[key]
-#
-#     def avg_acc(self):
-#         return self.data['correct'] / self.data['total']
-#
-#     def avg_loss(self):
-#         return self.data['loss'] / self.data['total']
-#
-#     def save(self):
-#         with open(self.save_path, 'w') as save_file:
-#             a = 0  # csv.writer()
-#             # TODO
-#
-
-def select_model(args):
-    if args.model == 'COVIDNet_small':
-        return CovidNet('small', n_classes=args.classes)
-
-    elif args.model == 'COVIDNet_large':
-        return CovidNet('large', n_classes=args.classes)
-    elif args.model in ['resnet18', 'mobilenet_v2', 'densenet169', 'resneXt']:
-        return CNN(args.classes, args.model)
-    elif args.model == 'vit':
-        return ViT(
-            image_size=224,
-            patch_size=32,
-            num_classes=3,
-            dim=512,
-            depth=6,
-            heads=16,
-            mlp_dim=1024,
-            dropout=0.1,
-            emb_dropout=0.1
-        )
-
-
-def select_optimizer(args, model):
-    if args.opt == 'sgd':
-        return optim.SGD(model.parameters(), lr=args.lr, momentum=0.5, weight_decay=args.weight_decay)
-    elif args.opt == 'adam':
-        return optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
-    elif args.opt == 'rmsprop':
-        return optim.RMSprop(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 
 
 def read_txt(txt_path):
@@ -264,13 +233,20 @@ def read_txt(txt_path):
 
 def print_stats(args, epoch, num_samples, trainloader, metrics):
     if (num_samples % args.log_interval == 1):
-        print("Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}\tPPV:{:.3f}\tsensitivity{:.3f}".format(epoch,
-                                                                                     num_samples,
-                                                                                     len(
-                                                                                         trainloader) * args.batch_size,
-                                                                                     metrics.avg('loss')
-                                                                                     ,
-                                                                                     metrics.avg('accuracy'), metrics.avg('ppv'), metrics.avg('sensitivity')))
+        print(
+            "Epoch:{:2d}\tSample:{:5d}/{:5d}\tLoss:{:.4f}\tAccuracy:{:.2f}\tPPV:{:.3f}\tsensitivity{:.3f}".format(epoch,
+                                                                                                                  num_samples,
+                                                                                                                  len(
+                                                                                                                      trainloader) * args.batch_size,
+                                                                                                                  metrics.avg(
+                                                                                                                      'loss')
+                                                                                                                  ,
+                                                                                                                  metrics.avg(
+                                                                                                                      'accuracy'),
+                                                                                                                  metrics.avg(
+                                                                                                                      'ppv'),
+                                                                                                                  metrics.avg(
+                                                                                                                      'sensitivity')))
 
 
 def print_summary(args, epoch, num_samples, metrics, mode=''):
@@ -281,3 +257,173 @@ def print_summary(args, epoch, num_samples, metrics, mode=''):
                                                                                                          'loss'),
                                                                                                      metrics.avg(
                                                                                                          'accuracy')))
+
+
+def load_csv_file(path):
+    """
+
+    Args:
+        path ():
+
+    Returns:
+
+    """
+    data_paths = []
+    labels = []
+    with open(path) as fin:
+        reader = csv.reader(fin)
+        data = list(reader)
+    for item in data:
+        data_paths.append(item[0])
+        labels.append(item[1])
+    return data_paths, labels
+
+
+def txt_logger(txtname, log):
+    """
+
+    Args:
+        txtname ():
+        log ():
+    """
+    with open(txtname, 'a') as f:
+        for item in log:
+            f.write(item)
+            f.write(',')
+
+        f.write('\n')
+
+
+def write_csv(data, name):
+    """
+
+    Args:
+        data ():
+        name ():
+    """
+    with open(name, 'w') as fout:
+        for item in data:
+            # print(item)
+            fout.write(item)
+            fout.write('\n')
+
+
+def check_dir(path):
+    if not os.path.exists(path):
+        print("Checkpoint Directory does not exist! Making directory {}".format(path))
+        os.makedirs(path)
+
+
+def get_lr(optimizer):
+    """
+
+    Args:
+        optimizer ():
+
+    Returns:
+
+    """
+    for param_group in optimizer.param_groups:
+        return param_group['lr']
+
+
+def getopts(argv):
+    opts = {}  # Empty dictionary to store key-value pairs.
+    while argv:  # While there are arguments left to parse...
+        if argv[0][0] == '-':  # Found a "-name value" pair.
+            opts[argv[0].strip('--').strip('-')] = argv[1]  # Add key and value to the dictionary.
+        argv = argv[1:]  # Reduce the argument list by copying it starting from index 1.
+    return opts
+
+
+def get_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--batch_size', type=int, default=4, help='batch size for training')
+    parser.add_argument('--log_interval', type=int, default=1000, help='steps to log.info metrics and loss')
+    parser.add_argument('--dataset_name', type=str, default="COVIDx", help='dataset name COVIDx or COVID_CT')
+    parser.add_argument('--nEpochs', type=int, default=250, help='total number of epochs')
+    parser.add_argument('--device', type=int, default=0, help='gpu device')
+    parser.add_argument('--seed', type=int, default=123, help='select seed number for reproducibility')
+    parser.add_argument('--classes', type=int, default=3, help='dataset classes')
+    parser.add_argument('--lr', default=1e-2, type=float,
+                        help='learning rate (default: 1e-3)')
+    parser.add_argument('--weight_decay', default=1e-6, type=float,
+                        help='weight decay (default: 1e-6)')
+    parser.add_argument('--cuda', action='store_true', default=True, help='use gpu for speed-up')
+    parser.add_argument('--tensorboard', action='store_true', default=True,
+                        help='use tensorboard for loggging and visualization')
+    parser.add_argument('--resume', default='', type=str, metavar='PATH',
+                        help='path to latest checkpoint (default: none)')
+    parser.add_argument('--model', type=str, default='mobilenet_v2',
+                        choices=('COVIDNet_small', 'resnet18', 'mobilenet_v2', 'densenet169', 'COVIDNet_large'))
+    parser.add_argument('--opt', type=str, default='sgd',
+                        choices=('sgd', 'adam', 'rmsprop'))
+    parser.add_argument('--root_path', type=str, default='./data/data',
+                        help='path to dataset ')
+    parser.add_argument('--save', type=str, default='./saved/COVIDNet',
+                        help='path to checkpoint save directory ')
+    args = parser.parse_args()
+    return args
+
+
+def reproducibility(config):
+    os.environ['CUDA_VISIBLE_DEVICES'] = str(config.gpu)
+    SEED = config.seed
+    torch.manual_seed(SEED)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(SEED)
+    if (config.cuda):
+        torch.cuda.manual_seed(SEED)
+
+
+def select_optimizer(model, config, checkpoint=None):
+    opt = config['optimizer']['type']
+    lr = config['optimizer']['lr']
+    if (opt == 'Adam'):
+        print(" use optimizer Adam lr ", lr)
+        optimizer = optim.Adam(model.parameters(), lr=float(config['optimizer']['lr']), weight_decay=0.00001)
+    elif (opt == 'SGD'):
+        print(" use optimizer SGD lr ", lr)
+        optimizer = optim.SGD(model.parameters(), lr=float(config['optimizer']['lr']), momentum=0.9)
+    elif (opt == 'RMSprop'):
+        print(" use RMS  lr", lr)
+        optimizer = optim.RMSprop(model.parameters(), lr=float(config['optimizer']['lr']))
+    if (checkpoint != None):
+        # print('load opt cpkt')
+        optimizer.load_state_dict(checkpoint['optimizer_dict'])
+        for g in optimizer.param_groups:
+            g['lr'] = 0.005
+        print(optimizer.state_dict()['state'].keys())
+
+    if config['scheduler']['type'] == 'ReduceLRonPlateau':
+        from torch.optim.lr_scheduler import ReduceLROnPlateau
+        scheduler = ReduceLROnPlateau(optimizer, factor=config['scheduler']['scheduler_factor'],
+                                      patience=config['scheduler']['scheduler_patience'],
+                                      min_lr=config['scheduler']['scheduler_min_lr'],
+                                      verbose=config['scheduler']['scheduler_verbose'])
+        return optimizer, scheduler
+
+    return optimizer, None
+
+
+def select_model(config, n_classes):
+    if config.model.name == 'COVIDNet_small':
+        return CovidNet('small', n_classes=n_classes)
+
+    elif config.model.name == 'COVIDNet_large':
+        return CovidNet('large', n_classes=n_classes)
+    elif config.model.name in ['resnet18', 'mobilenet_v2', 'densenet169', 'resneXt']:
+        return CNN(n_classes, config.model.name)
+    elif config.model.name == 'vit':
+        return ViT(
+            image_size=224,
+            patch_size=32,
+            num_classes=3,
+            dim=512,
+            depth=6,
+            heads=16,
+            mlp_dim=1024,
+            dropout=0.1,
+            emb_dropout=0.1
+        )

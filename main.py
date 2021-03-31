@@ -1,71 +1,97 @@
-import argparse
+import datetime
+import datetime
+import os
+import shutil
+import sys
 
-import numpy as np
 import torch
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from omegaconf import OmegaConf
 from torch.utils.tensorboard import SummaryWriter
 
 import utils.util as util
-from trainer.train import initialize, train, validation
+from logger.logger import Logger
+from trainer.train_utils import select_dataset
+from trainer.trainer import Trainer
+from utils.util import getopts, reproducibility, select_model, select_optimizer, load_checkpoint, get_arguments
 
 
 def main():
     args = get_arguments()
-    SEED = args.seed
-    torch.manual_seed(SEED)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-    np.random.seed(SEED)
-    if (args.cuda):
-        torch.cuda.manual_seed(SEED)
-    model, optimizer, training_generator, val_generator, test_generator = initialize(args)
+    myargs = getopts(sys.argv)
+    now = datetime.datetime.now()
+    cwd = os.getcwd()
+    if len(myargs) > 0:
+        if 'c' in myargs:
+            config_file = myargs['c']
+    else:
+        config_file = 'config/trainer_config.yml'
 
-    print(model)
+    config = OmegaConf.load(os.path.join(cwd, config_file))['trainer']
+    config.cwd = cwd
+    reproducibility(config)
+    dt_string = now.strftime("%d_%m_%Y_%H.%M.%S")
+    cpkt_fol_name = os.path.join(config.cwd,
+                                 'checkpoints/model_' + config.model.name + '/dataset_' + config.dataset.name + '/date_' + dt_string)
+
+    log = Logger(path=cpkt_fol_name, name='LOG').get_logger()
 
     best_pred_loss = 1000.0
-    scheduler = ReduceLROnPlateau(optimizer, factor=0.5, patience=2, min_lr=1e-5, verbose=True)
-    print('Checkpoint folder ', args.save)
+    log.info(f"Checkpoint folder {args.save}")
+    log.info(f"date and time = {dt_string}")
+
+    log.info(f'pyTorch VERSION:{torch.__version__}', )
+    log.info(f'CUDA VERSION')
+
+    log.info(f'CUDNN VERSION:{torch.backends.cudnn.version()}')
+    log.info(f'Number CUDA Devices: {torch.cuda.device_count()}')
+
     if args.tensorboard:
+
+        writer_path = os.path.join(config.cwd,
+                                   'checkpoints/model_' + config.model.name + '/dataset_' + config.dataset.name + '/date_' + dt_string + '/runs/')
+
         writer = SummaryWriter('./runs/' + util.datestr())
     else:
         writer = None
-    for epoch in range(1, args.nEpochs + 1):
-        train(args, model, training_generator, optimizer, epoch, writer)
-        val_metrics, confusion_matrix = validation(args, model, val_generator, epoch, writer)
 
-        best_pred_loss = util.save_model(model, optimizer, args, val_metrics, epoch, best_pred_loss, confusion_matrix)
+    use_cuda = torch.cuda.is_available()
 
-        #scheduler.step(val_metrics.avg_loss())
+    device = torch.device("cuda:0" if use_cuda else "cpu")
+    log.info(f'device: {device}')
 
+    training_generator, val_generator, test_generator, class_dict = select_dataset(config)
+    n_classes = len(class_dict)
+    model = select_model(config, n_classes)
 
-def get_arguments():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', type=int, default=4, help='batch size for training')
-    parser.add_argument('--log_interval', type=int, default=1000, help='steps to print metrics and loss')
-    parser.add_argument('--dataset_name', type=str, default="COVIDx", help='dataset name COVIDx or COVID_CT')
-    parser.add_argument('--nEpochs', type=int, default=250, help='total number of epochs')
-    parser.add_argument('--device', type=int, default=0, help='gpu device')
-    parser.add_argument('--seed', type=int, default=123, help='select seed number for reproducibility')
-    parser.add_argument('--classes', type=int, default=3, help='dataset classes')
-    parser.add_argument('--lr', default=1e-2, type=float,
-                        help='learning rate (default: 1e-3)')
-    parser.add_argument('--weight_decay', default=1e-6, type=float,
-                        help='weight decay (default: 1e-6)')
-    parser.add_argument('--cuda', action='store_true', default=True, help='use gpu for speed-up')
-    parser.add_argument('--tensorboard', action='store_true', default=True,
-                        help='use tensorboard for loggging and visualization')
-    parser.add_argument('--resume', default='', type=str, metavar='PATH',
-                        help='path to latest checkpoint (default: none)')
-    parser.add_argument('--model', type=str, default='mobilenet_v2',
-                        choices=('COVIDNet_small', 'resnet18', 'mobilenet_v2', 'densenet169', 'COVIDNet_large'))
-    parser.add_argument('--opt', type=str, default='sgd',
-                        choices=('sgd', 'adam', 'rmsprop'))
-    parser.add_argument('--root_path', type=str, default='./data/data',
-                        help='path to dataset ')
-    parser.add_argument('--save', type=str, default='./saved/COVIDNet' + util.datestr(),
-                        help='path to checkpoint save directory ')
-    args = parser.parse_args()
-    return args
+    log.info(f"{model}")
+
+    if (config.load):
+        model.fc = torch.nn.Linear(2048, 226)
+
+        pth_file, _ = load_checkpoint(config.pretrained_cpkt, model, strict=True, load_seperate_layers=False)
+
+        model.fc = torch.nn.Linear(2048, 311)
+
+    else:
+        pth_file = None
+    if (config.cuda and use_cuda):
+        if torch.cuda.device_count() > 1:
+            log.info(f"Let's use {torch.cuda.device_count()} GPUs!")
+
+            model = torch.nn.DataParallel(model)
+    model.to(device)
+
+    optimizer, scheduler = select_optimizer(model, config['model'], None)
+    log.info(f'{model}')
+    log.info(f"Checkpoint Folder {cpkt_fol_name} ")
+    shutil.copy(os.path.join(config.cwd, config_file), cpkt_fol_name)
+
+    trainer = Trainer(config, model=model, optimizer=optimizer,
+                      data_loader=training_generator, writer=writer, logger=log,
+                      valid_data_loader=val_generator, test_data_loader=test_generator, class_dict=class_dict,
+                      lr_scheduler=scheduler,
+                      checkpoint_dir=cpkt_fol_name)
+    trainer.train()
 
 
 if __name__ == '__main__':

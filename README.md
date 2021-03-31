@@ -28,11 +28,33 @@ Also Google Colab Notebook for plug-n-play training and evaluation here [![Open 
 <!-- GETTING STARTED -->
 ## Getting Started
 
-### Installation
-To install the required python packages use the following command 
+
+
+## TODOs
+
+- [ ] Final Requirements
+- [ ] Pretrained models
+- [ ] Test all pretrained models
+- [ ] Instructions for training 
+- [ ] Adding command line option for inference
+
+## Requirements
+
+### Installation & Data Preparation
+
+Please refer to 
+```python
+ pip install -r requirements.txt
 ```
-pip install -r requirements.txt
-```
+
+
+
+
+* Python >= 3.6 (3.6 recommended)
+* PyTorch >= 1.4 (1.6.0 recommended)
+* torchvision >=0.6.0  
+* tqdm (Optional for `test.py`)
+* tensorboard >= 1.14 
 <!-- USAGE EXAMPLES -->
 ## Usage
 
@@ -42,32 +64,57 @@ The network takes as input an image of shape (N, 224, 224, 3) and outputs the so
 
 1. To train the Network from scratch simply do `python main.py` 
  Arguments for training 
- ```
-   -h, --help            show this help message and exit
-  --batch_size BATCH_SIZE
-                        batch size for training
-  --log_interval LOG_INTERVAL
-                        steps to print metrics and loss
-  --dataset_name DATASET_NAME
-                        dataset name
-  --nEpochs NEPOCHS     total number of epochs
-  --device DEVICE       gpu device
-  --seed SEED           select seed number for reproducibility
-  --classes CLASSES     dataset classes
-  --lr LR               learning rate (default: 1e-3)
-  --weight_decay WEIGHT_DECAY
-                        weight decay (default: 1e-6)
-  --cuda                use gpu for speed-up
-  --tensorboard         use tensorboard for loggging and visualization
-  --resume PATH         path to latest checkpoint (default: none)
-  --model {COVIDNet_small,resnet18,mobilenet_v2,densenet169,COVIDNet_large}
-  --opt {sgd,adam,rmsprop}
-  --root_path ROOT_PATH
-                        path to dataset
-  --save SAVE           path to checkpoint save directory
-
-
+```yaml
+trainer:
+  cwd: /home/ # working directory
+  logger: CovidCLF # logger name
+  epochs: 30 # number of training epochs
+  seed: 123 # randomness seed
+  cuda: True # use nvidia gpu
+  gpu: 0,1 # id of gpu
+  save: True # save checkpoint
+  load: False # load pretrained checkpoint
+  gradient_accumulation: 1 # gradient accumulation steps
+  pretrained_cpkt: cpkt.pt
+  log_interval: 1000 # print statistics every log_interval
+  model:
+    name: mobilenet_v2 # model name  [mobilenet_v2,COVIDNet_small]
+    optimizer: # optimizer configuration
+      type: SGD # optimizer type
+      lr: 1e-2 # learning rate
+      weight_decay: 0.000001 # weight decay
+    scheduler: # learning rate scheduler
+      type: ReduceLRonPlateau # type of scheduler
+      scheduler_factor: 0.5 # learning rate change ratio
+      scheduler_patience: 0 # patience for some epochs
+      scheduler_min_lr: 1e-3 # minimum learning rate value
+      scheduler_verbose: 5e-6 # print if learning rate is changed
+  dataloader:
+    train:
+      batch_size: 4 # batch size
+      shuffle: True # shuffle samples after every epoch
+      num_workers: 2 # number of thread for dataloader1
+    val:
+      batch_size: 2
+      shuffle: False
+      num_workers: 2
+    test:
+      batch_size: 1
+      shuffle: False
+      num_workers: 2
+  dataset:
+    input_data: ./data/data
+    name: COVIDx # dataset name COVIDx or COVID_CT
+    modality: RGB # type of modality
+    dim: [224,224] # image dimension
+    train:
+      augmentation: True # do augmentation to video
+    val:
+      augmentation: False
+    test:
+      augmentation: False
 ```
+
 <!-- RESULTS -->
 ## Results 
 
@@ -78,25 +125,22 @@ with my   implementation  of COVID-Net and comparison with CNNs pretrained on Im
 ### Results in COVIDx  dataset 
 
 
-| Accuracy (%) | # Params (M) | MACs (G) |        Model        |
+|    Model        | Accuracy (%) | # Params (M) | MACs (G) |      
 |:------------:|:------------:|:--------:|:-------------------:|
-|   89.10      |     115.42   |   2.26   |   [COVID-Net-Small] |
-|   91.22      |     118.19   |   3.54   |   [COVID-Net-Large](https://drive.google.com/open?id=1-3SKFua_wFl2_aAQMIrj2FhowTX8B551) |
-|   94.0       |     -   |   -      |   [Mobilenet V2   ](https://drive.google.com/open?id=19J-1bW6wPl7Kmm0pNagehlM1zk9m37VV) |
-|   95.0       |     -   |   -      |   [ResNeXt50-32x4d](https://drive.google.com/open?id=1-BLolPNYMVWSY0Xnm8Y8wjQCapXiPnLx) |
-|   94.0       |     -   |   -      | [ResNet-18](https://drive.google.com/open?id=1wxo4gkNGyrhR-1PG8Vr1hj65MfSAHOgJ) |
+ | [COVID-Net-Small] |    |   89.10      |     115.42   |   2.26   |  
+ |   [COVID-Net-Large](https://drive.google.com/open?id=1-3SKFua_wFl2_aAQMIrj2FhowTX8B551) |   91.22      |     118.19   |   3.54   | 
+ |   [Mobilenet V2   ](https://drive.google.com/open?id=19J-1bW6wPl7Kmm0pNagehlM1zk9m37VV) |   94.0       |     -   |   -      |
+ |   [ResNeXt50-32x4d](https://drive.google.com/open?id=1-BLolPNYMVWSY0Xnm8Y8wjQCapXiPnLx) |   95.0       |     -   |   -      |
+ | [ResNet-18](https://drive.google.com/open?id=1wxo4gkNGyrhR-1PG8Vr1hj65MfSAHOgJ)   |   94.0       |     -   |   -       |
 
 ### Results in COVID-CT  dataset 
-Soon ...
 
-| Accuracy (%) | # Params (M) | MACs (G) |        Model        |
+
+|  Model       | Accuracy (%) | # Params (M) | MACs (G) | 
 |:------------:|:------------:|:--------:|:-------------------:|
-|   -   |     -   |  -   |   [COVID-Net-Small] |
-|   -      |     -   |   -  |   [COVID-Net-Large] |
-|   76      |     -   |   -      |   [Mobilenet V2   ](https://drive.google.com/open?id=1alVSSN-PkibfFQcH0RA1xIPMSfbVxI89) |
-|   76    |     -   |   -      |   [ResNeXt50-32x4d] |
-|  73     |     -   |   -      | [ResNet-18] |
-|  81    |     -   |   -      | [Densenet-169] |
+|    [COVID-Net-Small]  |     -   |  -   |  |
+|     [COVID-Net-Large]     |     -   |   -  |  |
+
 
 Confusion Matrix on both datasets coming soon !!
 
@@ -132,14 +176,6 @@ Download the datasets listed above
 4. We provide the train and test txt files with patientId, image path and label (normal, pneumonia or COVID-19). The description for each file is explained below:
  * [train\_COVIDx.txt](train_COVIDx.txt): This file contains the samples used for training.
  * [test\_COVIDx.txt](test_COVIDx.txt): This file contains the samples used for testing.
-
-
-Chest radiography images distribution
-
-|  Type | Normal | Pneumonia | COVID-19 | Total |
-|:-----:|:------:|:---------:|:--------:|:-----:|
-| train |  7966  |    8514   |    66    | 16546 |
-|  test |   100  |     100   |    10    |   210 |
 
 
 

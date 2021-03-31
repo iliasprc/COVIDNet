@@ -19,12 +19,14 @@ class COVIDxDataset(Dataset):
     Code for reading the COVIDxDataset
     """
 
-    def __init__(self, mode, n_classes=3, dataset_path='./data', dim=(224, 224)):
-        self.root = str(dataset_path) + '/' + mode + '/'
+    def __init__(self, config, mode,  dim=(224, 224)):
+        self.config = config
+        self.root = self.config.dataset.input_data + '/' + mode + '/'
 
-        self.CLASSES = n_classes
+
         self.dim = dim
-        self.COVIDxDICT = {'pneumonia': 0, 'normal': 1, 'COVID-19': 2}
+        self.class_dict = {'pneumonia': 0, 'normal': 1, 'COVID-19': 2}
+        self.CLASSES = len(self.class_dict)
         testfile = './data/test_split.txt'
         trainfile = './data/train_split.txt'
         if (mode == 'train'):
@@ -44,7 +46,7 @@ class COVIDxDataset(Dataset):
     def __getitem__(self, index):
 
         image_tensor = self.load_image(self.root + self.paths[index], self.dim, augmentation=self.mode)
-        label_tensor = torch.tensor(self.COVIDxDICT[self.labels[index]], dtype=torch.long)
+        label_tensor = torch.tensor(self.class_dict[self.labels[index]], dtype=torch.long)
 
         return image_tensor, label_tensor
 

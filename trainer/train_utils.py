@@ -10,7 +10,43 @@ from model.metric import accuracy, sensitivity, positive_predictive_value
 from utils.util import print_stats, print_summary, select_model, select_optimizer, MetricTracker
 
 
-def initialize(args):
+def select_dataset(config):
+    test_params = {'batch_size': config.dataloader.test.batch_size,
+                   'shuffle': False,
+                   'num_workers': 2}
+    val_params = {'batch_size': config.dataloader.val.batch_size,
+                  'shuffle': config.dataloader.val.shuffle,
+                  'num_workers': config.dataloader.val.num_workers,
+                  'pin_memory': True}
+
+    train_params = {'batch_size': config.dataloader.train.batch_size,
+                    'shuffle': config.dataloader.train.shuffle,
+                    'num_workers': config.dataloader.train.num_workers,
+                    'pin_memory': True}
+
+    if config.dataset.name == 'COVIDx':
+        train_loader = COVIDxDataset(config, mode='train')
+        val_loader = COVIDxDataset(config, mode='test')
+        class_dict = train_loader.class_dict
+        test_loader = None
+
+        training_generator = DataLoader(train_loader, **train_params)
+        val_generator = DataLoader(val_loader, **test_params)
+        test_generator = None
+        return training_generator, val_generator, test_generator, class_dict
+    elif config.dataset.namee == 'COVID_CT':
+        train_loader = CovidCTDataset(config, 'train')
+        val_loader = CovidCTDataset(config, 'val')
+        test_loader = CovidCTDataset(config, 'test')
+        class_dict = train_loader.class_dict
+        training_generator = DataLoader(train_loader, **train_params)
+        val_generator = DataLoader(val_loader, **val_params)
+        test_generator = DataLoader(test_loader, **test_params)
+
+        return training_generator, val_generator, test_generator, class_dict
+
+
+def initialize_model(args):
     if args.device is not None:
         os.environ["CUDA_VISIBLE_DEVICES"] = str(args.device)
     model = select_model(args)
@@ -18,52 +54,17 @@ def initialize(args):
     optimizer = select_optimizer(args, model)
     if (args.cuda):
         model.cuda()
-
-    train_params = {'batch_size': args.batch_size,
-                    'shuffle': True,
-                    'num_workers': 2}
-
-    test_params = {'batch_size': args.batch_size,
-                   'shuffle': False,
-                   'num_workers': 1}
-    if args.dataset_name == 'COVIDx':
-        train_loader = COVIDxDataset(mode='train', n_classes=args.classes, dataset_path=args.root_path,
-                                     dim=(224, 224))
-        val_loader = COVIDxDataset(mode='test', n_classes=args.classes, dataset_path=args.root_path,
-                                   dim=(224, 224))
-
-        test_loader = None
-
-        training_generator = DataLoader(train_loader, **train_params)
-        val_generator = DataLoader(val_loader, **test_params)
-        test_generator = None
-
-    elif args.dataset_name == 'COVID_CT':
-        train_loader = CovidCTDataset('train', root_dir='./data/covid_ct_dataset',
-                                      txt_COVID='./data/covid_ct_dataset/trainCT_COVID.txt',
-                                      txt_NonCOVID='./data/covid_ct_dataset/trainCT_NonCOVID.txt')
-        val_loader = CovidCTDataset('val', root_dir='./data/covid_ct_dataset',
-                                    txt_COVID='./data/covid_ct_dataset/valCT_COVID.txt',
-                                    txt_NonCOVID='./data/covid_ct_dataset/valCT_NonCOVID.txt')
-        test_loader = CovidCTDataset('test', root_dir='./data/covid_ct_dataset',
-                                     txt_COVID='./data/covid_ct_dataset/testCT_COVID.txt',
-                                     txt_NonCOVID='./data/covid_ct_dataset/testCT_NonCOVID.txt')
-
-        training_generator = DataLoader(train_loader, **train_params)
-        val_generator = DataLoader(val_loader, **test_params)
-        test_generator = DataLoader(test_loader, **test_params)
-
-    return model, optimizer, training_generator, val_generator, test_generator
+    return model, optimizer
 
 
-def train(args, model, trainloader, optimizer, epoch, writer):
+def train(args, model, trainloader, optimizer, epoch, writer, log):
     model.train()
     criterion = nn.CrossEntropyLoss(reduction='mean')
 
     metric_ftns = ['loss', 'correct', 'total', 'accuracy', 'ppv', 'sensitivity']
     train_metrics = MetricTracker(*[m for m in metric_ftns], writer=writer, mode='train')
     train_metrics.reset()
-    confusion_matrix = torch.zeros(args.classes, args.classes)
+    confusion_matrix = torch.zeros(args.class_dict, args.class_dict)
 
     for batch_idx, input_tensors in enumerate(trainloader):
         optimizer.zero_grad()
@@ -91,8 +92,8 @@ def train(args, model, trainloader, optimizer, epoch, writer):
     s = sensitivity(confusion_matrix.numpy())
     ppv = positive_predictive_value(confusion_matrix.numpy())
     print(f" s {s} ,ppv {ppv}")
-    train_metrics.update('sensitivity', s, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
-    train_metrics.update('ppv', ppv, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
+    # train_metrics.update('sensitivity', s, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
+    # train_metrics.update('ppv', ppv, writer_step=(epoch - 1) * len(trainloader) + batch_idx)
     print_summary(args, epoch, num_samples, train_metrics, mode="Training")
     return train_metrics
 
@@ -101,10 +102,10 @@ def validation(args, model, testloader, epoch, writer):
     model.eval()
     criterion = nn.CrossEntropyLoss(reduction='mean')
 
-    metric_ftns = ['loss', 'correct', 'total', 'accuracy','ppv', 'sensitivity']
+    metric_ftns = ['loss', 'correct', 'total', 'accuracy', 'ppv', 'sensitivity']
     val_metrics = MetricTracker(*[m for m in metric_ftns], writer=writer, mode='val')
     val_metrics.reset()
-    confusion_matrix = torch.zeros(args.classes, args.classes)
+    confusion_matrix = torch.zeros(args.class_dict, args.class_dict)
     with torch.no_grad():
         for batch_idx, input_tensors in enumerate(testloader):
 
