@@ -6,7 +6,7 @@ import torch
 from base.base_trainer import BaseTrainer
 from model.metric import sensitivity, positive_predictive_value
 from utils.util import MetricTracker
-from utils.util import write_csv, save_model
+from utils.util import write_csv, save_model,make_dirs
 
 
 class Trainer(BaseTrainer):
@@ -141,13 +141,13 @@ class Trainer(BaseTrainer):
         Train the model
         """
         for epoch in range(self.start_epoch, self.epochs):
-            #     torch.manual_seed(self.config.seed)
-            #     self._train_epoch(epoch)
-            #
-            #     self.logger.info(f"{'!' * 10}    VALIDATION   , {'!' * 10}")
-            #     validation_loss = self._valid_epoch(epoch, 'validation', self.valid_data_loader)
-            #     check_dir(self.checkpoint_dir)
-            validation_loss = 0
+            torch.manual_seed(self.config.seed)
+            self._train_epoch(epoch)
+
+            self.logger.info(f"{'!' * 10}    VALIDATION   , {'!' * 10}")
+            validation_loss = self._valid_epoch(epoch, 'validation', self.valid_data_loader)
+            make_dirs(self.checkpoint_dir)
+
             self.checkpointer(epoch, validation_loss)
             self.lr_scheduler.step(validation_loss)
             if self.do_test:
@@ -205,7 +205,7 @@ class Trainer(BaseTrainer):
                 self.logger.warning(f" No metrics")
             else:
                 self.logger.info(
-                    f"{mode} Epoch: [{epoch:2d}/{self.epochs:2d}]\t Video [{batch_idx * self.config.dataloader.train.batch_size:5d}/{self.len_epoch:5d}]\t {metrics_string}")
+                    f"{mode} Epoch: [{epoch:2d}/{self.epochs:2d}]\t Sample [{batch_idx * self.config.dataloader.train.batch_size:5d}/{self.len_epoch:5d}]\t {metrics_string}")
         elif print_summary:
             self.logger.info(
                 f'{mode} summary  Epoch: [{epoch}/{self.epochs}]\t {metrics_string}')

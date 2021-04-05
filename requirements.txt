@@ -1,8 +1,10 @@
-matplotlib==3.2.1
-numpy==1.18.2
-pandas==1.0.3
-scikit-learn==0.22.2.post1
-scipy==1.4.1
-torch==1.4.0
-torchvision==0.5.0
+matplotlib
+numpy
+pandas
+scikit-learn
+scipy
+torch
+torchvision
 tensorboard
+omegaconf
+byol-pytorch

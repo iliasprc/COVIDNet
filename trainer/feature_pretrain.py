@@ -11,17 +11,17 @@ model = CovidNet('small', n_classes=n_classes)
 #
 # model = CNN(n_classes, 'mobilenet_v2')
 #
-# model = ViT(
-#     image_size=224,
-#     patch_size=32,
-#     num_classes=3,
-#     dim=512,
-#     depth=6,
-#     heads=16,
-#     mlp_dim=1024,
-#     dropout=0.1,
-#     emb_dropout=0.1
-# )
+model = ViT(
+    image_size=224,
+    patch_size=32,
+    num_classes=3,
+    dim=512,
+    depth=6,
+    heads=16,
+    mlp_dim=1024,
+    dropout=0.1,
+    emb_dropout=0.1
+)
 print(model)
 learner = BYOL(
     model,

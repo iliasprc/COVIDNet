@@ -17,14 +17,14 @@ from utils.util import getopts, reproducibility, select_model, select_optimizer,
 
 def main():
     args = get_arguments()
-    myargs = getopts(sys.argv)
+    myargs = []# getopts(sys.argv)
     now = datetime.datetime.now()
     cwd = os.getcwd()
     if len(myargs) > 0:
         if 'c' in myargs:
             config_file = myargs['c']
     else:
-        config_file = 'config/trainer_config.yml'
+        config_file = 'config/trainer_config_colab.yml'
 
     config = OmegaConf.load(os.path.join(cwd, config_file))['trainer']
     config.cwd = cwd
@@ -47,7 +47,7 @@ def main():
 
     if args.tensorboard:
 
-        writer_path = os.path.join(config.cwd,
+        writer_path = os.path.join(config.save,
                                    'checkpoints/model_' + config.model.name + '/dataset_' + config.dataset.name + '/date_' + dt_string + '/runs/')
 
         writer = SummaryWriter('./runs/' + util.datestr())

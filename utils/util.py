@@ -10,7 +10,8 @@ import pandas as pd
 import torch
 import torch.optim as optim
 
-from model.model import CovidNet, CNN
+from model.model import CovidNet
+from model.cnn import CNN
 from model.vit import ViT
 
 
