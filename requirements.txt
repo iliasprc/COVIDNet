@@ -8,3 +8,4 @@ torchvision
 tensorboard
 omegaconf
 byol-pytorch
+einops
