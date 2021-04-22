@@ -41,7 +41,10 @@ class Trainer(BaseTrainer):
         self.optimizer = optimizer
 
         self.mnt_best = np.inf
-        self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
+        if self.config.dataset.type =='multi_target':
+            self.criterion = torch.nn.BCEWithLogitsLoss(reduction='mean')
+        else:
+            self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
         self.checkpoint_dir = checkpoint_dir
         self.gradient_accumulation = config.gradient_accumulation
         self.writer = writer
@@ -51,6 +54,7 @@ class Trainer(BaseTrainer):
         self.valid_metrics = MetricTracker(*[m for m in self.metric_ftns], writer=self.writer, mode='validation')
         self.logger = logger
 
+        self.confusion_matrix = torch.zeros(self.num_classes, self.num_classes)
     def _train_epoch(self, epoch):
         """
         Training logic for an epoch
@@ -60,7 +64,7 @@ class Trainer(BaseTrainer):
         """
 
         self.model.train()
-        confusion_matrix = torch.zeros(3, 3)
+        self.confusion_matrix = 0* self.confusion_matrix
         self.train_metrics.reset()
         gradient_accumulation = self.gradient_accumulation
         for batch_idx, (data, target) in enumerate(self.train_data_loader):
@@ -87,7 +91,7 @@ class Trainer(BaseTrainer):
                                       value=np.sum(prediction[1].cpu().numpy() == target.squeeze(-1).cpu().numpy()),
                                       n=target.size(0), writer_step=writer_step)
             for t, p in zip(target.cpu().view(-1), prediction[1].cpu().view(-1)):
-                confusion_matrix[t.long(), p.long()] += 1
+                self.confusion_matrix[t.long(), p.long()] += 1
             self._progress(batch_idx, epoch, metrics=self.train_metrics, mode='train')
 
         self._progress(batch_idx, epoch, metrics=self.train_metrics, mode='train', print_summary=True)
@@ -106,7 +110,7 @@ class Trainer(BaseTrainer):
         self.model.eval()
         self.valid_sentences = []
         self.valid_metrics.reset()
-        confusion_matrix = torch.zeros(self.num_classes, self.num_classes)
+        self.confusion_matrix = 0* self.confusion_matrix
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(loader):
                 data = data.to(self.device)
@@ -126,11 +130,11 @@ class Trainer(BaseTrainer):
                                           value=np.sum(prediction[1].cpu().numpy() == target.squeeze(-1).cpu().numpy()),
                                           n=target.size(0), writer_step=writer_step)
                 for t, p in zip(target.cpu().view(-1), prediction[1].cpu().view(-1)):
-                    confusion_matrix[t.long(), p.long()] += 1
+                    self.confusion_matrix[t.long(), p.long()] += 1
         self._progress(batch_idx, epoch, metrics=self.valid_metrics, mode=mode, print_summary=True)
 
-        s = sensitivity(confusion_matrix.numpy())
-        ppv = positive_predictive_value(confusion_matrix.numpy())
+        s = sensitivity(self.confusion_matrix.numpy())
+        ppv = positive_predictive_value(self.confusion_matrix.numpy())
         print(f" s {s} ,ppv {ppv}")
         val_loss = self.valid_metrics.avg('loss')
 

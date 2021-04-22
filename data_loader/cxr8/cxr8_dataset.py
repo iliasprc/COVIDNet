@@ -47,15 +47,14 @@ class CXR8Dataset(Dataset):
     def __init__(self, config, mode, dim=(224, 224)):
         self.config = config
         self.root = self.config.dataset.input_data + '/'
-        images, labels, classes, class2index = read_cxr8(path)
 
         self.dim = dim
 
-        testfile = './data/test_split.txt'
-        trainfile = './data/train_split.txt'
+        testfile = 'data/test_split.txt'
+        trainfile = 'data/train_split.txt'
 
-        self.paths, self.labels, self.classes, self.class_dict = read_cxr8(
-            train_)
+        self.paths, self.labels, self.classes, self.class_dict = read_cxr8(os.path.join(config.cwd,
+            train_))
 
         if mode == 'train':
             split = int(0.2 * len(self.paths))
@@ -68,8 +67,8 @@ class CXR8Dataset(Dataset):
             self.paths = self.paths[:split]
             self.do_augmentation = False
         if (mode == 'test'):
-            self.paths, self.labels, _, _ = read_cxr8(
-                test_)
+            self.paths, self.labels, _, _ = read_cxr8(os.path.join(config.cwd,
+                test_))
 
             self.do_augmentation = False
         print("{} examples =  {}".format(mode, len(self.paths)))
@@ -81,13 +80,14 @@ class CXR8Dataset(Dataset):
     def __getitem__(self, index):
 
         image_tensor = self.load_image(self.root + self.paths[index][0], self.dim)
-        labels = self.labels[0].split('|')
+        #image_tensor = torch.randn(3,224,224).float()
+        labels = self.labels[index][0].split('|')
         y = torch.zeros(len(self.classes))
 
         for i in labels:
             y[self.class_dict[i]] = 1
-
-        return image_tensor, torch.LongTensor(y)
+        # print(y)
+        return image_tensor, y.float()
 
     def load_image(self, img_path, dim):
         if not os.path.exists(img_path):

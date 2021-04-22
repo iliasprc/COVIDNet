@@ -3,7 +3,7 @@ import os
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-
+from data_loader.cxr8.cxr8_dataset import CXR8Dataset
 from data_loader.covid_ct_dataset import CovidCTDataset
 from data_loader.covidxdataset import COVIDxDataset
 from model.metric import accuracy, sensitivity, positive_predictive_value
@@ -23,7 +23,7 @@ def select_dataset(config):
                     'shuffle': config.dataloader.train.shuffle,
                     'num_workers': config.dataloader.train.num_workers,
                     'pin_memory': True}
-
+    print(config.dataset.name)
     if config.dataset.name == 'COVIDx':
         train_loader = COVIDxDataset(config, mode='train')
         val_loader = COVIDxDataset(config, mode='test')
@@ -42,6 +42,16 @@ def select_dataset(config):
         training_generator = DataLoader(train_loader, **train_params)
         val_generator = DataLoader(val_loader, **val_params)
         test_generator = DataLoader(test_loader, **test_params)
+        return training_generator, val_generator, test_generator, class_dict
+    elif config.dataset.name == 'CXR8':
+        train_loader = CXR8Dataset(config, 'train')
+        val_loader =  CXR8Dataset(config, 'val')
+        test_loader =  CXR8Dataset(config, 'test')
+        class_dict = train_loader.class_dict
+        training_generator = DataLoader(train_loader, **train_params)
+        val_generator = DataLoader(val_loader, **val_params)
+        test_generator = DataLoader(test_loader, **test_params)
+
 
         return training_generator, val_generator, test_generator, class_dict
 

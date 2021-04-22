@@ -37,7 +37,8 @@ trainer:
       num_workers: 2
   dataset:
     input_data: /content/data/data
-    name: COVIDx # dataset name COVIDx or COVID_CT
+    name: CXR8 # dataset name COVIDx or COVID_CT
+    type: multi_target
     modality: RGB # type of modality
     dim: [224,224] # image dimension
     train:
