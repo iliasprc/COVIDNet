@@ -6,8 +6,10 @@ import torch
 from base.base_trainer import BaseTrainer
 from model.metric import sensitivity, positive_predictive_value
 from utils.util import MetricTracker
-from utils.util import write_csv, save_model,make_dirs
+from utils.util import write_csv, save_model, make_dirs
 from sklearn.metrics import accuracy_score
+from utils.metrics import *
+
 
 class Trainer(BaseTrainer):
     """
@@ -41,7 +43,7 @@ class Trainer(BaseTrainer):
         self.optimizer = optimizer
 
         self.mnt_best = np.inf
-        if self.config.dataset.type =='multi_target':
+        if self.config.dataset.type == 'multi_target':
             self.criterion = torch.nn.BCEWithLogitsLoss(reduction='mean')
         else:
             self.criterion = torch.nn.CrossEntropyLoss(reduction='mean')
@@ -55,6 +57,7 @@ class Trainer(BaseTrainer):
         self.logger = logger
 
         self.confusion_matrix = torch.zeros(self.num_classes, self.num_classes)
+
     def _train_epoch(self, epoch):
         """
         Training logic for an epoch
@@ -65,7 +68,7 @@ class Trainer(BaseTrainer):
 
         self.model.train()
         y, yhat, yhat_raw, hids, losses = [], [], [], [], []
-        self.confusion_matrix = 0* self.confusion_matrix
+        self.confusion_matrix = 0 * self.confusion_matrix
         self.train_metrics.reset()
         gradient_accumulation = self.gradient_accumulation
         for batch_idx, (data, target) in enumerate(self.train_data_loader):
@@ -75,6 +78,7 @@ class Trainer(BaseTrainer):
             target = target.to(self.device)
 
             output = self.model(data)
+
             loss = self.criterion(output, target)
             loss = loss.mean()
 
@@ -87,28 +91,21 @@ class Trainer(BaseTrainer):
 
             writer_step = (epoch - 1) * self.len_epoch + batch_idx
 
-            acc = accuracy_score(target.cpu().numpy(),np.round(output.cpu().numpy()))
-            print(acc)
-            yhat_raw.append(output)
-            output = np.round(output)
-            y.append(target)
+            output = torch.sigmoid(output)
+            yhat_raw.append(output.detach().cpu().numpy())
+            output = np.round(output.detach().cpu().numpy())
+            y.append(target.detach().cpu().numpy())
             yhat.append(output)
-
-        y = np.concatenate(y, axis=0)
-        yhat = np.concatenate(yhat, axis=0)
-        yhat_raw = np.concatenate(yhat_raw, axis=0)
+            self.train_metrics.update(key='loss', value=loss.item(), n=1, writer_step=writer_step)
+            self._progress(batch_idx, epoch, metrics=self.train_metrics, mode='train')
+            # metrics = all_metrics(np.concatenate(yhat, axis=0),np.concatenate(y, axis=0), 5, np.concatenate(yhat_raw, axis=0))
+            # print_metrics(metrics)
 
         k = 5
-        #metrics = all_metrics(yhat, y, k=k, yhat_raw=yhat_raw)
-        self._progress(batch_idx, epoch, metrics=self.train_metrics, mode='train')
-
-
-        self.train_metrics.update(key='loss', value=loss.item(), n=1, writer_step=writer_step)
-        self.train_metrics.update(key='acc',
-                                  value=np.sum(prediction[1].cpu().numpy() == target.squeeze(-1).cpu().numpy()),
-                                  n=target.size(0), writer_step=writer_step)
-
-
+        metrics = all_metrics(np.concatenate(yhat, axis=0), np.concatenate(y, axis=0), 5,
+                              np.concatenate(yhat_raw, axis=0))
+        print_metrics(metrics, self.logger)
+        # metrics = all_metrics(yhat, y, k=k, yhat_raw=yhat_raw)
 
         self._progress(batch_idx, epoch, metrics=self.train_metrics, mode='train', print_summary=True)
 
@@ -123,6 +120,7 @@ class Trainer(BaseTrainer):
         Returns: validation loss
 
         """
+        y, yhat, yhat_raw, hids, losses = [], [], [], [], []
         self.model.eval()
         self.valid_sentences = []
         self.valid_metrics.reset()
@@ -139,14 +137,23 @@ class Trainer(BaseTrainer):
                 writer_step = (epoch - 1) * len(loader) + batch_idx
 
                 prediction = torch.max(output, 1)
-                acc = np.sum(prediction[1].cpu().numpy() == target.squeeze(-1).cpu().numpy()) / target.size(0)
-                acc = accuracy_score(target.cpu().numpy(), np.round(output.cpu().numpy()))
-                print(acc)
-                # self.valid_metrics.update(key='loss', value=loss.item(), n=1, writer_step=writer_step)
+                output = torch.sigmoid(output)
+                yhat_raw.append(output.detach().cpu().numpy())
+                output = np.round(output.detach().cpu().numpy())
+                y.append(target.detach().cpu().numpy())
+                yhat.append(output)
+                self.valid_metrics.update(key='loss', value=loss.item(), n=1, writer_step=writer_step)
                 # self.valid_metrics.update(key='acc',
                 #                           value=np.sum(prediction[1].cpu().numpy() == target.squeeze(-1).cpu().numpy()),
                 #                           n=target.size(0), writer_step=writer_step)
 
+            # metrics = all_metrics(np.concatenate(yhat, axis=0),np.concatenate(y, axis=0), 5, np.concatenate(yhat_raw, axis=0))
+            # print_metrics(metrics)
+
+        k = 5
+        metrics = all_metrics(np.concatenate(yhat, axis=0), np.concatenate(y, axis=0), 5,
+                              np.concatenate(yhat_raw, axis=0))
+        print_metrics(metrics, self.logger)
         self._progress(batch_idx, epoch, metrics=self.valid_metrics, mode=mode, print_summary=True)
 
         # s = sensitivity(self.confusion_matrix.numpy())

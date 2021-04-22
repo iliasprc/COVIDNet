@@ -144,6 +144,30 @@ def precision_at_k(yhat_raw, y, k):
     return np.mean(vals)
 
 
+def print_metrics(metrics,log):
+    print()
+    if "auc_macro" in metrics.keys():
+        log.info(f"[MACRO] accuracy, precision, recall, f-measure, AUC")
+        log.info(f"%.4f, %.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_macro"], metrics["prec_macro"], metrics["rec_macro"], metrics["f1_macro"],
+            metrics["auc_macro"]))
+    else:
+        log.info(f"[MACRO] accuracy, precision, recall, f-measure")
+        log.info(f"%.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_macro"], metrics["prec_macro"], metrics["rec_macro"], metrics["f1_macro"]))
+
+    if "auc_micro" in metrics.keys():
+        log.info(f"[MICRO] accuracy, precision, recall, f-measure, AUC")
+        log.info(f"%.4f, %.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_micro"], metrics["prec_micro"], metrics["rec_micro"], metrics["f1_micro"],
+            metrics["auc_micro"]))
+    else:
+        log.info(f"[MICRO] accuracy, precision, recall, f-measure")
+        log.info(f"%.4f, %.4f, %.4f, %.4f" % (
+            metrics["acc_micro"], metrics["prec_micro"], metrics["rec_micro"], metrics["f1_micro"]))
+    for metric, val in metrics.items():
+        if metric.find("rec_at") != -1:
+            log.info(f"%s: %.4f" % (metric, val))
 def print_metrics(metrics):
     print()
     if "auc_macro" in metrics.keys():

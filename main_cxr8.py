@@ -30,7 +30,7 @@ def main():
     config.cwd = str(cwd)
     reproducibility(config)
     dt_string = now.strftime("%d_%m_%Y_%H.%M.%S")
-    cpkt_fol_name = os.path.join(config.cwd,
+    cpkt_fol_name = os.path.join(config.save,
                                  f'checkpoints/model_{config.model.name}/dataset_{config.dataset.name}/date_{dt_string}')
 
     log = Logger(path=cpkt_fol_name, name='LOG').get_logger()
@@ -47,8 +47,7 @@ def main():
 
     if args.tensorboard:
 
-        # writer_path = os.path.join(config.save,
-        #                            'checkpoints/model_' + config.model.name + '/dataset_' + config.dataset.name + '/date_' + dt_string + '/runs/')
+        writer_path = os.path.join(cpkt_fol_name+'runs/')
 
         writer = SummaryWriter('./runs/' + util.datestr())
     else:
