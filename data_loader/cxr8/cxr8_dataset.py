@@ -54,7 +54,7 @@ class CXR8Dataset(Dataset):
         trainfile = 'data/train_split.txt'
 
         self.paths, self.labels, self.classes, self.class_dict = read_cxr8(os.path.join(config.cwd,
-            train_))
+                                                                                        train_))
 
         if mode == 'train':
             split = int(0.2 * len(self.paths))
@@ -68,7 +68,7 @@ class CXR8Dataset(Dataset):
             self.do_augmentation = False
         if (mode == 'test'):
             self.paths, self.labels, _, _ = read_cxr8(os.path.join(config.cwd,
-                test_))
+                                                                   test_))
 
             self.do_augmentation = False
         print("{} examples =  {}".format(mode, len(self.paths)))
@@ -80,12 +80,16 @@ class CXR8Dataset(Dataset):
     def __getitem__(self, index):
 
         image_tensor = self.load_image(self.root + self.paths[index][0], self.dim)
-        #image_tensor = torch.randn(3,224,224).float()
+        # image_tensor = torch.randn(3,224,224).float()
         labels = self.labels[index][0].split('|')
         y = torch.zeros(len(self.classes))
 
         for i in labels:
-            y[self.class_dict[i]] = 1
+            if i != 'No Finding':
+                y[self.class_dict[i]] = 1
+            else:
+                print(i, y)
+
         # print(y)
         return image_tensor, y.float()
 

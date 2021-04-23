@@ -1,14 +1,11 @@
 import os
 
-import numpy as np
 import torch
 
 from base.base_trainer import BaseTrainer
-from model.metric import sensitivity, positive_predictive_value
+from utils.metrics import *
 from utils.util import MetricTracker
 from utils.util import write_csv, save_model, make_dirs
-from sklearn.metrics import accuracy_score
-from utils.metrics import *
 
 
 class Trainer(BaseTrainer):

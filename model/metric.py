@@ -53,25 +53,19 @@ def confusion_matrix(predictions, targets):
 #     return TP / (TP + FP)
 
 
-
-def sensitivity( cnf_matrix):
-
-
-    #print(cnf_matrix)
+def sensitivity(cnf_matrix):
+    # print(cnf_matrix)
     eps = 1e-7
     FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
     FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
     TP = np.diag(cnf_matrix)
     TN = cnf_matrix.sum() - (FP + FN + TP)
 
-    return TP / (TP + FN +eps)
+    return TP / (TP + FN + eps)
 
 
-
-def  positive_predictive_value(cnf_matrix):
-
-
-    #print(cnf_matrix)
+def positive_predictive_value(cnf_matrix):
+    # print(cnf_matrix)
     eps = 1e-7
     FP = cnf_matrix.sum(axis=0) - np.diag(cnf_matrix)
     FN = cnf_matrix.sum(axis=1) - np.diag(cnf_matrix)
@@ -80,5 +74,5 @@ def  positive_predictive_value(cnf_matrix):
     # print(TP)
     # print(FP)
     # print(TP / (TP + FP))
-    #print(TP.sum() / (TP + FP).sum())
-    return TP / (TP + FP+eps)
+    # print(TP.sum() / (TP + FP).sum())
+    return TP / (TP + FP + eps)
