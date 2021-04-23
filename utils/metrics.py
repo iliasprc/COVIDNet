@@ -168,7 +168,7 @@ def print_metrics(metrics,log):
     for metric, val in metrics.items():
         if metric.find("rec_at") != -1:
             log.info(f"%s: %.4f" % (metric, val))
-def print_metrics(metrics):
+def print_metrics2(metrics):
     print()
     if "auc_macro" in metrics.keys():
         print("[MACRO] accuracy, precision, recall, f-measure, AUC")
