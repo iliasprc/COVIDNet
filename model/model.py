@@ -71,8 +71,26 @@ class CovidNet(nn.Module):
             'pexp4_2': [2048, 2048],
             'pexp4_3': [2048, 2048],
         }
+        filters = {
+            'pexp1_1': [56, 56],
+            'pexp1_2': [56, 56],
+            'pexp1_3': [56, 56],
+            'pexp2_1': [56, 112],
+            'pexp2_2': [112, 112],
+            'pexp2_3': [112, 112],
+            'pexp2_4': [112, 112],
+            'pexp3_1': [112, 216],
+            'pexp3_2': [216, 216],
+            'pexp3_3': [216, 216],
+            'pexp3_4': [216, 216],
+            'pexp3_5': [216, 216],
+            'pexp3_6': [216, 216],
+            'pexp4_1': [216, 424],
+            'pexp4_2': [424, 424],
+            'pexp4_3': [424, 424],
+        }
 
-        self.add_module('conv1', nn.Conv2d(in_channels=3, out_channels=64, kernel_size=7, stride=2, padding=3))
+        self.add_module('conv1', nn.Conv2d(in_channels=3, out_channels=56, kernel_size=7, stride=2, padding=3))
         for key in filters:
 
             if ('pool' in key):
@@ -82,19 +100,19 @@ class CovidNet(nn.Module):
 
         if (model == 'large'):
 
-            self.add_module('conv1_1x1', nn.Conv2d(in_channels=64, out_channels=256, kernel_size=1))
-            self.add_module('conv2_1x1', nn.Conv2d(in_channels=256, out_channels=512, kernel_size=1))
-            self.add_module('conv3_1x1', nn.Conv2d(in_channels=512, out_channels=1024, kernel_size=1))
-            self.add_module('conv4_1x1', nn.Conv2d(in_channels=1024, out_channels=2048, kernel_size=1))
+            self.add_module('conv1_1x1', nn.Conv2d(in_channels=56, out_channels=112, kernel_size=1))
+            self.add_module('conv2_1x1', nn.Conv2d(in_channels=112, out_channels=216, kernel_size=1))
+            self.add_module('conv3_1x1', nn.Conv2d(in_channels=216, out_channels=424, kernel_size=1))
+            self.add_module('conv4_1x1', nn.Conv2d(in_channels=424, out_channels=424, kernel_size=1))
 
             self.__forward__ = self.forward_large_net
         else:
             self.__forward__ = self.forward_small_net
         self.add_module('flatten', Flatten())
-        self.add_module('fc1', nn.Linear(7 * 7 * 2048, 1024))
+        self.add_module('fc1', nn.Linear(7 * 7 * 424, 512))
 
-        self.add_module('fc2', nn.Linear(1024, 256))
-        self.add_module('classifier', nn.Linear(256, n_classes))
+
+        self.add_module('classifier', nn.Linear(512, n_classes))
         for m in self.modules():
             print(m)
             if isinstance(m, nn.Conv2d):
@@ -147,8 +165,8 @@ class CovidNet(nn.Module):
         flattened = self.flatten(pepx41 + pepx42 + pepx43 + out_conv4_1x1)
 
         fc1out = F.relu(self.fc1(flattened))
-        fc2out = F.relu(self.fc2(fc1out))
-        logits = self.classifier(fc2out)
+
+        logits = self.classifier(fc1out)
         return logits
 
     def forward_small_net(self, x):
@@ -180,6 +198,6 @@ class CovidNet(nn.Module):
         flattened = self.flatten(pepx41 + pepx42 + pepx43)
 
         fc1out = F.relu(self.fc1(flattened))
-        fc2out = F.relu(self.fc2(fc1out))
-        logits = self.classifier(fc2out)
+        #fc2out = F.relu(self.fc2(fc1out))
+        logits = self.classifier(fc1out)
         return logits

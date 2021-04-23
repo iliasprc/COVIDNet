@@ -15,6 +15,7 @@ train_ = './data_loader/cxr8/train_images.txt'
 test_ = './data_loader/cxr8/test_images.txt'
 
 
+
 def read_cxr8(path):
     d = pd.read_csv(path)
 
@@ -27,8 +28,9 @@ def read_cxr8(path):
         l = multi_label[0].split('|')
 
         for i in l:
-            if i not in classes:
-                classes.append(i)
+            if i != 'No Finding':
+                if i not in classes:
+                    classes.append(i)
 
     i = 0
     for c in classes:

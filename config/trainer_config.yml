@@ -8,11 +8,11 @@ trainer:
   save: True # save checkpoint
   load: False # load pretrained checkpoint
   gradient_accumulation: 1 # gradient accumulation steps
-  pretrained_cpkt: cpkt.pt
+  pretrained_cpkt: /home/iliask/PycharmProjects/COVIDNet/trainer/improved-covidnet_small.pt
 
   log_interval: 10000 # print statistics every log_interval
   model:
-    name: COVIDNet_large # model name  [mobilenet_v2,COVIDNet_small]
+    name: COVIDNet_small # model name  [mobilenet_v2,COVIDNet_small]
     optimizer: # optimizer configuration
       type: SGD # optimizer type
       lr: 1e-2 # learning rate
