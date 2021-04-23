@@ -1,7 +1,7 @@
 trainer:
   cwd: /home/ # working directory
   logger: CovidCLF # logger name
-  epochs: 30 # number of training epochs
+  epochs: 100 # number of training epochs
   seed: 123 # randomness seed
   cuda: True # use nvidia gpu
   gpu: 0,1 # id of gpu
@@ -9,34 +9,35 @@ trainer:
   load: False # load pretrained checkpoint
   gradient_accumulation: 1 # gradient accumulation steps
   pretrained_cpkt: cpkt.pt
-  log_interval: 1000 # print statistics every log_interval
+
+  log_interval: 10000 # print statistics every log_interval
   model:
-    name: mobilenet_v2 # model name  [mobilenet_v2,COVIDNet_small]
+    name: COVIDNet_large # model name  [mobilenet_v2,COVIDNet_small]
     optimizer: # optimizer configuration
       type: SGD # optimizer type
       lr: 1e-2 # learning rate
       weight_decay: 0.000001 # weight decay
     scheduler: # learning rate scheduler
       type: ReduceLRonPlateau # type of scheduler
-      scheduler_factor: 0.5 # learning rate change ratio
-      scheduler_patience: 0 # patience for some epochs
-      scheduler_min_lr: 1e-3 # minimum learning rate value
-      scheduler_verbose: 5e-6 # print if learning rate is changed
+      scheduler_factor: 0.9 # learning rate change ratio
+      scheduler_patience: 1 # patience for some epochs
+      scheduler_min_lr: 2e-3 # minimum learning rate value
+      scheduler_verbose: True # print if learning rate is changed
   dataloader:
     train:
-      batch_size: 4 # batch size
+      batch_size: 24 # batch size
       shuffle: True # shuffle samples after every epoch
-      num_workers: 2 # number of thread for dataloader1
+      num_workers: 4 # number of thread for dataloader1
     val:
-      batch_size: 2
+      batch_size: 24
       shuffle: False
-      num_workers: 2
+      num_workers: 4
     test:
       batch_size: 1
       shuffle: False
       num_workers: 2
   dataset:
-    input_data: ./data/data
+    input_data: /home/iliask/PycharmProjects/COVIDNet/data/cxr8
     name: CXR8 # dataset name COVIDx or COVID_CT
     type: multi_target
     modality: RGB # type of modality

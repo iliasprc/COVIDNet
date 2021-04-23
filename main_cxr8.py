@@ -24,19 +24,19 @@ def main():
         if 'c' in myargs:
             config_file = myargs['c']
     else:
-        config_file = 'config/config_cxr8_colab.yml'
+        config_file = 'config/trainer_config.yml'
 
     config = OmegaConf.load(os.path.join(cwd, config_file))['trainer']
     config.cwd = str(cwd)
     reproducibility(config)
     dt_string = now.strftime("%d_%m_%Y_%H.%M.%S")
-    cpkt_fol_name = os.path.join(config.save,
+    cpkt_fol_name = os.path.join(config.cwd,
                                  f'checkpoints/model_{config.model.name}/dataset_{config.dataset.name}/date_{dt_string}')
 
     log = Logger(path=cpkt_fol_name, name='LOG').get_logger()
 
     best_pred_loss = 1000.0
-    log.info(f"Checkpoint folder {args.save}")
+    log.info(f"Checkpoint folder {cpkt_fol_name}")
     log.info(f"date and time = {dt_string}")
 
     log.info(f'pyTorch VERSION:{torch.__version__}', )
@@ -49,7 +49,7 @@ def main():
 
         writer_path = os.path.join(cpkt_fol_name+'runs/')
 
-        writer = SummaryWriter('./runs/' + util.datestr())
+        writer = SummaryWriter(writer_path + util.datestr())
     else:
         writer = None
 

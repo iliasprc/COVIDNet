@@ -38,7 +38,13 @@ class PEXP(nn.Module):
                                                kernel_size=3, groups=int(3 * n_input / 4), padding=1),
                                      nn.Conv2d(in_channels=int(3 * n_input / 4), out_channels=n_input // 2,
                                                kernel_size=1),
-                                     nn.Conv2d(in_channels=n_input // 2, out_channels=n_out, kernel_size=1))
+                                     nn.Conv2d(in_channels=n_input // 2, out_channels=n_out, kernel_size=1),nn.BatchNorm2d(n_out))
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
         return self.network(x)
@@ -89,6 +95,13 @@ class CovidNet(nn.Module):
 
         self.add_module('fc2', nn.Linear(1024, 256))
         self.add_module('classifier', nn.Linear(256, n_classes))
+        for m in self.modules():
+            print(m)
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
     def forward(self, x):
         return self.__forward__(x)

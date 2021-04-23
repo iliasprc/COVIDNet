@@ -10,8 +10,8 @@ import pandas as pd
 import torch
 import torch.optim as optim
 
-from model.cnn import CNN
 from model.model import CovidNet
+from model.cnn import CNN
 from model.vit import ViT
 
 
@@ -383,15 +383,13 @@ def select_optimizer(model, config, checkpoint=None):
     lr = config['optimizer']['lr']
     if (opt == 'Adam'):
         print(" use optimizer Adam lr ", lr)
-        optimizer = optim.Adam(model.parameters(), lr=float(config['optimizer']['lr']), weight_decay=0.000001)
+        optimizer = optim.Adam(model.parameters(), lr=float(config['optimizer']['lr']), weight_decay=0.00001)
     elif (opt == 'SGD'):
         print(" use optimizer SGD lr ", lr)
-        optimizer = optim.SGD(model.parameters(), lr=float(config['optimizer']['lr']), momentum=0.9,
-                              weight_decay=float(config['optimizer']['weight_decay']))
+        optimizer = optim.SGD(model.parameters(), lr=float(config['optimizer']['lr']), momentum=0.9)
     elif (opt == 'RMSprop'):
         print(" use RMS  lr", lr)
-        optimizer = optim.RMSprop(model.parameters(), lr=float(config['optimizer']['lr']),
-                                  weight_decay=float(config['optimizer']['weight_decay']))
+        optimizer = optim.RMSprop(model.parameters(), lr=float(config['optimizer']['lr']))
     if (checkpoint != None):
         # print('load opt cpkt')
         optimizer.load_state_dict(checkpoint['optimizer_dict'])
@@ -416,7 +414,7 @@ def select_model(config, n_classes):
 
     elif config.model.name == 'COVIDNet_large':
         return CovidNet('large', n_classes=n_classes)
-    elif config.model.name in ['resnet18', 'mobilenet_v2', 'densenet121', 'resneXt']:
+    elif config.model.name in ['resnet18', 'mobilenet_v2', 'densenet169', 'resneXt']:
         return CNN(n_classes, config.model.name)
     elif config.model.name == 'vit':
         return ViT(
