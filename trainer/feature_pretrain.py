@@ -1,7 +1,7 @@
 import torch
 from byol_pytorch import BYOL
 
-from model import CNN, CovidNet, ViT
+from model import CovidNet
 
 n_classes = 14
 
@@ -41,8 +41,8 @@ for i in range(200):
     loss = learner(images.cuda())
     opt.zero_grad()
     loss.backward()
-    if i%10==0:
-        print(i,loss.item())
+    if i % 10 == 0:
+        print(i, loss.item())
     opt.step()
     learner.update_moving_average()  # update moving average of target encoder
 

@@ -1,35 +1,44 @@
-import torch.nn as nn
+from typing import Optional
 
+import torch
+import torch.nn as nn
 import torch.nn.functional as F
 
 
 class Flatten(nn.Module):
-    def forward(self, input):
+    """Flattens the input tensor for use in the neural network.
+
+    This class defines the operation to flatten an input tensor.
+    """
+
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        """Flattens the input tensor.
+
+        Args:
+            input (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The flattened tensor.
+        """
         return input.view(input.size(0), -1)
 
 
 class PEPX(nn.Module):
-    def __init__(self, n_input, n_out):
-        super(PEPX, self).__init__()
+    """Defines the PEPX Convolutional Neural Network architecture.
 
-        '''
-        • First-stage Projection: 1×1 convolutions for projecting input features to a lower dimension,
+    This class creates a PEPX model, which contains several convolutional layers
+    for feature projection, expansion, depth-wise representation, second-stage
+    projection, and final extension.
 
-        • Expansion: 1×1 convolutions for expanding features
-            to a higher dimension that is different than that of the
-            input features,
+    Args:
+        n_input (int): The number of input features.
+        n_out (int): The number of output features.
 
+    Attributes:
+        network (nn.Sequential): The neural network layers.
+    """
 
-        • Depth-wise Representation: efficient 3×3 depthwise convolutions for learning spatial characteristics to
-            minimize computational complexity while preserving
-            representational capacity,
-
-        • Second-stage Projection: 1×1 convolutions for projecting features back to a lower dimension, and
-
-        • Extension: 1×1 convolutions that finally extend channel dimensionality to a higher dimension to produce
-             the final features.
-             
-        '''
+    def __init__(self, n_input: int, n_out: int):
 
         self.network = nn.Sequential(nn.Conv2d(in_channels=n_input, out_channels=n_input // 2, kernel_size=1),
                                      nn.Conv2d(in_channels=n_input // 2, out_channels=int(3 * n_input / 4),
@@ -38,7 +47,8 @@ class PEPX(nn.Module):
                                                kernel_size=3, groups=int(3 * n_input / 4), padding=1),
                                      nn.Conv2d(in_channels=int(3 * n_input / 4), out_channels=n_input // 2,
                                                kernel_size=1),
-                                     nn.Conv2d(in_channels=n_input // 2, out_channels=n_out, kernel_size=1),nn.BatchNorm2d(n_out))
+                                     nn.Conv2d(in_channels=n_input // 2, out_channels=n_out, kernel_size=1),
+                                     nn.BatchNorm2d(n_out))
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
@@ -46,31 +56,35 @@ class PEPX(nn.Module):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Defines the forward pass of the PEPX model.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The output tensor, result of the forward pass of the model.
+        """
         return self.network(x)
 
 
 class CovidNet(nn.Module):
-    def __init__(self, model='small', n_classes=3):
+    """Defines the CovidNet model architecture for classification tasks.
+
+    The architecture consists of a sequence of PEPX blocks and linear layers. It can be built
+    in a small or large configuration depending on the model parameter.
+
+    Args:
+        model (str): Model type, either 'small' or 'large'. Defaults to 'small'.
+        n_classes (int): Number of classes for the final classification. Defaults to 3.
+
+    Attributes:
+        All the PEPX blocks and other layers in the network.
+    """
+
+    def __init__(self, model: str = 'small', n_classes: int = 3):
         super(CovidNet, self).__init__()
-        filters = {
-            'pepx1_1': [64, 256],
-            'pepx1_2': [256, 256],
-            'pepx1_3': [256, 256],
-            'pepx2_1': [256, 512],
-            'pepx2_2': [512, 512],
-            'pepx2_3': [512, 512],
-            'pepx2_4': [512, 512],
-            'pepx3_1': [512, 1024],
-            'pepx3_2': [1024, 1024],
-            'pepx3_3': [1024, 1024],
-            'pepx3_4': [1024, 1024],
-            'pepx3_5': [1024, 1024],
-            'pepx3_6': [1024, 1024],
-            'pepx4_1': [1024, 2048],
-            'pepx4_2': [2048, 2048],
-            'pepx4_3': [2048, 2048],
-        }
+
         filters = {
             'pepx1_1': [56, 56],
             'pepx1_2': [56, 56],
@@ -111,20 +125,37 @@ class CovidNet(nn.Module):
         self.add_module('flatten', Flatten())
         self.add_module('fc1', nn.Linear(7 * 7 * 424, 512))
 
-
         self.add_module('classifier', nn.Linear(512, n_classes))
+        self._initialize_weights()
+
+    def _initialize_weights(self):
         for m in self.modules():
-            print(m)
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
             elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Defines the computation performed at every call.
 
-    def forward(self, x):
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The output tensor.
+        """
         return self.__forward__(x)
 
-    def forward_large_net(self, x, target=None):
+    def forward_large_net(self, x: torch.Tensor, target: Optional[torch.Tensor] = None) -> torch.Tensor:
+        """Defines the forward pass for the large model variant.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+            target (torch.Tensor, optional): The target tensor. Defaults to None.
+
+        Returns:
+            torch.Tensor: The output tensor, result of the forward pass of the large model.
+        """
         x = F.max_pool2d(F.relu(self.conv1(x)), 2)
         out_conv1_1x1 = self.conv1_1x1(x)
 
@@ -169,7 +200,15 @@ class CovidNet(nn.Module):
         logits = self.classifier(fc1out)
         return logits
 
-    def forward_small_net(self, x):
+    def forward_small_net(self, x: torch.Tensor) -> torch.Tensor:
+        """Defines the forward pass for the small model variant.
+
+        Args:
+            x (torch.Tensor): The input tensor.
+
+        Returns:
+            torch.Tensor: The output tensor, result of the forward pass of the small model.
+        """
         x = F.max_pool2d(F.relu(self.conv1(x)), 2)
 
         pepx11 = self.pepx1_1(x)
@@ -198,6 +237,6 @@ class CovidNet(nn.Module):
         flattened = self.flatten(pepx41 + pepx42 + pepx43)
 
         fc1out = F.relu(self.fc1(flattened))
-        #fc2out = F.relu(self.fc2(fc1out))
+        # fc2out = F.relu(self.fc2(fc1out))
         logits = self.classifier(fc1out)
         return logits

@@ -9,39 +9,57 @@ from utils.util import make_dirs_if_not_present
 
 class Timer:
     """
-    """
+     A simple timer class for tracking time.
+     """
     DEFAULT_TIME_FORMAT_DATE_TIME = "%Y-%m-%d-%H:%M:%S"
     DEFAULT_TIME_FORMAT = ["%03dms", "%02ds", "%02dm", "%02dh"]
 
     def __init__(self):
+        """
+        Initializes the timer.
+        """
+
         self.start = time.time() * 1000
 
-    def get_current(self):
+    def get_current(self) -> str:
         """
+        Returns the current time.
+
         Returns:
+            str: The current time in milliseconds.
         """
+
         return self.get_time(self.start)
 
     def reset(self):
         """
+        Resets the timer.
         """
         self.start = time.time() * 1000
 
-    def get_time_since_start(self, time_format=None):
+    def get_time_since_start(self, time_format: list=None) -> str:
         """
+        Get the time since the timer started.
+
         Args:
-            time_format:
+            time_format (list, optional): Time format to be returned.
+
         Returns:
+            str: The time elapsed since the timer started.
         """
         return self.get_time(self.start, time_format)
 
-    def get_time(self, start=None, end=None, time_format=None):
+    def get_time(self, start: float = None, end: float = None, time_format: list = None) -> str:
         """
+        Calculates the elapsed time between start and end. If no start time is provided, it returns the current time.
+
         Args:
-            start:
-            end:
-            time_format:
+            start (float, optional): Start time in milliseconds.
+            end (float, optional): End time in milliseconds.
+            time_format (list, optional): Time format to be returned.
+
         Returns:
+            str: The elapsed time or the current time if start is None.
         """
         if start is None:
             if time_format is None:
@@ -77,13 +95,16 @@ class Timer:
 
 class Logger:
     """
+    A logger class for logging messages.
     """
-
-    def __init__(self, path, log_level=None, name=None):
+    def __init__(self, path: str, log_level: str=None, name: str=None):
         """
+        Initializes the logger.
+
         Args:
-            log_level:
-            name:
+            path (str): The path where logs will be saved.
+            log_level (str, optional): The level of logging.
+            name (str, optional): The name of the logger.
         """
         self.logger = None
         self.timer = Timer()
@@ -125,8 +146,11 @@ class Logger:
         cons_hdl.setFormatter(formatter)
         self.logger.addHandler(cons_hdl)
 
-    def get_logger(self):
+    def get_logger(self) -> logging.Logger:
         """
+        Returns the logger object.
+
         Returns:
+            logging.Logger: The logger object.
         """
         return self.logger

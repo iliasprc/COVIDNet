@@ -1,15 +1,11 @@
-import json
 import os
 
 import numpy as np
 import torch
-import torch.nn as nn
 
-from base import BaseTrainer
-from models.model_utils import save_checkpoint_slr
-from utils.metrics import accuracy
+from base.base_trainer import BaseTrainer
 from utils.util import MetricTracker
-from utils.util import write_csv, check_dir
+from utils.util import write_csv
 
 
 class Tester(BaseTrainer):
@@ -46,6 +42,7 @@ class Tester(BaseTrainer):
         self.metric_ftns = ['loss', 'acc']
         self.valid_metrics = MetricTracker(*[m for m in self.metric_ftns], writer=self.writer, mode='validation')
         self.logger = logger
+
     def _valid_epoch(self, epoch, mode, loader):
         """
 
@@ -74,17 +71,15 @@ class Tester(BaseTrainer):
                 prediction = torch.max(output, 1)
                 acc = np.sum(prediction[1].cpu().numpy() == target.cpu().numpy()) / target.size(0)
 
-                self.valid_metrics.update(key='loss',value=loss.item(),n=1,writer_step=writer_step)
-                self.valid_metrics.update(key='acc', value=np.sum(prediction[1].cpu().numpy() == target.cpu().numpy()), n=target.size(0), writer_step=writer_step)
+                self.valid_metrics.update(key='loss', value=loss.item(), n=1, writer_step=writer_step)
+                self.valid_metrics.update(key='acc', value=np.sum(prediction[1].cpu().numpy() == target.cpu().numpy()),
+                                          n=target.size(0), writer_step=writer_step)
 
         self._progress(batch_idx, epoch, metrics=self.valid_metrics, mode=mode, print_summary=True)
 
-
         val_loss = self.valid_metrics.avg('loss')
 
-
         return val_loss
-
 
     def predict(self):
         """
